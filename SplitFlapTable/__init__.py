@@ -1,15 +1,21 @@
+# Copyright (c) 2023, Mirko Barthauer
+# All rights reserved.
+
+# This source code is licensed under the MIT-style license found in the
+# LICENSE file in the same directory of this source tree.
+
 import bpy.utils
 
 from .control import SplitFlapSettings, SplitFlapKeySettings, SplitFlapPanel, SplitFlapAnimationPanel, SplitFlapApplyFrames, SplitFlapAnimationListItem, SplitFlapAnimationList, SplitFlapController, SplitFlapAnimationController
 
 bl_info = {
     "name": "Split Flap Table Generator",
-    "description": "Test",
-    "author": "MB",
+    "description": "Creates split flap tables like for classic railway and airport departure boards and creates the animation of switching from one string on display to the next. Can be customised by choosing the font, characters and font/background colours.",
+    "author": "Mirko Barthauer <m.barthauer@t-online.de>",
     "version": (0, 0, 1),
     "blender": (3, 4, 0),
     "location": "View3D",
-    "warning": "", # used for warning icon and text in addons panel
+    "warning": "",
     "wiki_url": "",
     "tracker_url": "",
     "category": "3D View"
@@ -22,7 +28,7 @@ def register():
     try:
         import PIL
     except ModuleNotFoundError as e:
-        self.report({'ERROR'}, "Please install the python module pillow in your Blender python before.")
+        self.report({'ERROR'}, "Please install the python module pillow in your Blender python beforehand.")
         return
     
     for cls in classes:
@@ -32,7 +38,7 @@ def register():
     bpy.types.Scene.splitFlapTool = bpy.props.PointerProperty(type=SplitFlapSettings)
     bpy.types.Scene.splitFlapKeySetting = bpy.props.PointerProperty(type=SplitFlapKeySettings)
     bpy.types.Scene.splitFlapAnimations = bpy.props.PointerProperty(type=SplitFlapAnimationList)
-    bpy.types.Scene.splitFlapAnimationIndex = bpy.props.IntProperty(name = "Index for SplitFlapAnimationList", default = 0)
+    bpy.types.Scene.splitFlapAnimationIndex = bpy.props.IntProperty(name = "Index for SplitFlapAnimationList", default = -1, update=control.flapAnimation_updateDisplay)
 
 def unregister():
     del bpy.types.Scene.splitFlapTool

@@ -1,0 +1,7 @@
+*.pyc
+*.blend1
+*.bat
+.project
+.pydevproject
+
+FlapCharacters.png

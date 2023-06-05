@@ -1,11 +1,14 @@
+# Copyright (c) 2023, Mirko Barthauer
+# All rights reserved.
+
+# This source code is licensed under the MIT-style license found in the
+# LICENSE file in the same directory of this source tree.
+
 import os
 import math
 from PIL import Image, ImageDraw, ImageFont
 
 def createCharactersTexture(charSpace=(125,200), characters="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-+.?! ", fontPath="bahnschrift.ttf", color="white", background="black", output="characters.png"):
-    # calculate the final image size
-    #h2w = charSpace[1]/charSpace[0]
-    # characters = characters[::-1] # inverse
     itemsPerSide = math.ceil(math.sqrt(len(characters)))
     imgSize = (charSpace[0]*itemsPerSide, charSpace[1]*itemsPerSide)
     
@@ -25,7 +28,6 @@ def createCharactersTexture(charSpace=(125,200), characters="ABCDEFGHIJKLMNOPQRS
         bbox = font.getmask("0").getbbox()
         currentSize = (bbox[2], bbox[3])
         error = [abs((currentSize[i]-targetSize[i])/targetSize[i]) for i in range(2)]
-        #print("it %d: errors %s" % (i, str(error)))
         # ending criterion 
         if max(error) <= acceptedError:
             break
@@ -55,8 +57,7 @@ def findFont(name):
     result = None
     if not "." in name:
         name = name + ".ttf"
-    fonts = [value for value in os.listdir(os.path.join(os.environ['WINDIR'],'fonts')) if value.endswith(".ttf")]
-    #print(fonts)
+    fonts = getFonts()
     if name in fonts:
         result = os.path.join(os.path.join(os.environ['WINDIR'],'fonts', name))
     elif name.lower() in fonts:
@@ -65,6 +66,9 @@ def findFont(name):
         print("Could not find font %s" % name)
     return result
 
+
+def getFonts():
+    return [value for value in os.listdir(os.path.join(os.environ['WINDIR'],'fonts')) if value.endswith(".ttf")]
 
 if __name__ == "__main__":
     fontPath = findFont("bahnschrift.ttf")

@@ -1,9 +1,16 @@
+# Copyright (c) 2023, Mirko Barthauer
+# All rights reserved.
+
+# This source code is licensed under the MIT-style license found in the
+# LICENSE file in the same directory of this source tree.
+
 import os
 import bpy
 import math
 import addon_utils
+from mathutils import Vector
 
-from .texture import createCharactersTexture, findFont
+from .texture import createCharactersTexture, findFont, getFonts
 
 class SplitFlapPanel(bpy.types.Panel):
     bl_label = "SplitFlap Panel"
@@ -14,6 +21,7 @@ class SplitFlapPanel(bpy.types.Panel):
     # bl_parent_id = ""
     
     def draw(self, context):
+        isWin = os.name == 'nt'
         layout = self.layout
         sfTool = context.scene.splitFlapTool
         row = layout.row()
@@ -31,7 +39,10 @@ class SplitFlapPanel(bpy.types.Panel):
         row = layout.row()
         row.prop(sfTool, "characters")
         row = layout.row()
-        row.prop(sfTool, "fontName")
+        if isWin:
+            row.prop(sfTool, "fontChoice")
+        else:
+            row.prop(sfTool, "fontName")
         row = layout.row()
         row.prop(sfTool, "identPrefix")
         row = layout.row()
@@ -39,8 +50,9 @@ class SplitFlapPanel(bpy.types.Panel):
         row = layout.row()
         row.prop(sfTool, "backgroundColor")
         row = layout.row()
-        #row.label(text="SplitFlapController")
-        row.operator("object.splitflapcontroller")
+        row.prop(sfTool, "createFrame")
+        row = layout.row()
+        row.operator("object.splitflapcontroller", text="Create split flap items")
 
 
 class SplitFlapAnimationPanel(bpy.types.Panel):
@@ -68,7 +80,6 @@ class SplitFlapAnimationPanel(bpy.types.Panel):
         row = layout.row()
         row.prop(sfKeySetting, "collection", expand=True)
         row = layout.row()
-        #row.label(text="SplitFlapAnimationController")
         row.operator("object.splitflapanimationcontroller", text="add entry").action='ADD'
         row.operator("object.splitflapanimationcontroller", text="update entry").action='UPDATE'
         row.operator("object.splitflapanimationcontroller", text="remove entry").action='DELETE'
@@ -91,6 +102,15 @@ class SplitFlapAnimationListItem(bpy.types.UIList):
             layout.alignment = 'CENTER'
             layout.label(text="")
 
+def flapSettings_getFonts(scene, context):
+    items = []
+    fonts = getFonts()
+    for font in fonts:
+        items.append((font, font, "available font"))
+    return items
+
+def flapSettings_updateFont(self, context):
+    self.fontName = self.fontChoice
 
 class SplitFlapSettings(bpy.types.PropertyGroup):
     rowCount : bpy.props.IntProperty(
@@ -142,10 +162,16 @@ class SplitFlapSettings(bpy.types.PropertyGroup):
         maxlen=1024,
     )
     fontName : bpy.props.StringProperty(
-       name="Font",
-       description="Font to use for the characters",
-       default="Bahnschrift",
-       maxlen=1024,
+        name="Font",
+        description="Font to use for the characters",
+        default="Bahnschrift",
+        maxlen=1024,
+    )
+    fontChoice : bpy.props.EnumProperty(
+        name="Font",
+        description="Font to use for the characters",
+        items=flapSettings_getFonts,
+        update=flapSettings_updateFont
     )
     identPrefix : bpy.props.StringProperty(
         name="Identifier",
@@ -165,6 +191,11 @@ class SplitFlapSettings(bpy.types.PropertyGroup):
         description="Base color of the split flap items",
         default=(1.0,0.0,0.0)
     )
+    createFrame : bpy.props.BoolProperty(
+        name = "Create frame",
+        description = "Create a frame shape to house the flaps",
+        default = False
+    )
 
 def keySettings_poll(self, object):
     return object["SplitFlap"] is not None
@@ -172,10 +203,23 @@ def keySettings_poll(self, object):
 def keySettings_update(self, context):
     self.collectionID = self.collection.name
 
+def flapAnimation_updateDisplay(self, context):
+    index = self.splitFlapAnimationIndex
+    item = self.splitFlapAnimations.items[index]
+    print("updateDisplay, set %s %.2f" % (item.text, item.keyTime))
+    self.splitFlapKeySetting.text = item.text
+    self.splitFlapKeySetting.keyTime = item.keyTime
+
 class SplitFlapKeySettings(bpy.types.PropertyGroup):
     text : bpy.props.StringProperty(
+        name="Original text input",
+        description="Original text input by the user",
+        default="",
+        maxlen=1024,
+    )
+    formattedText : bpy.props.StringProperty(
         name="Text to display",
-        description="Text to display when the split flap collection is initialised",
+        description="Text to display when the split flap collection is initialised, taking into account the available characters",
         default="",
         maxlen=1024,
     )
@@ -209,17 +253,21 @@ class SplitFlapKeySettings(bpy.types.PropertyGroup):
         poll=keySettings_poll,
         update=keySettings_update,
     )
+    selected : bpy.props.BoolProperty(
+        name="Selected",
+        description="Marker to remember if currrently selected in the UI",
+        default = False
+    )
 
 class SplitFlapAnimationList(bpy.types.PropertyGroup):
     itemIndex : bpy.props.IntProperty(name="itemIndex", default=0)
     items : bpy.props.CollectionProperty(name="items", type=SplitFlapKeySettings)
 
-# TODO: add variants to update and delete frames
 class SplitFlapAnimationController(bpy.types.Operator):
     bl_idname = "object.splitflapanimationcontroller"
     bl_label = "Add Split Flap Animation"
     # TODO: see https://b3d.interplanety.org/en/calling-functions-by-pressing-buttons-in-blender-custom-ui/
-    action: EnumProperty(
+    action: bpy.props.EnumProperty(
         items=[
             ('DELETE', 'remove entry', 'remove entry'),
             ('UPDATE', 'update entry', 'update entry'),
@@ -230,24 +278,142 @@ class SplitFlapAnimationController(bpy.types.Operator):
     def execute(self, context):
         sfKeySetting = context.scene.splitFlapKeySetting
         sfAnimations = context.scene.splitFlapAnimations
-        added = False
-        if len(sfKeySetting.collectionID) > 0 and sfKeySetting.collectionID in bpy.data.collections:
-            # check if there is already an entry for the same time
-            frameSettings = [frame for frame in sfAnimations.items if frame.collectionID == sfKeySetting.collectionID and abs(frame.keyTime - sfKeySetting.keyTime) < 0.1]
-            print(str(frameSettings))
-            if len(frameSettings) == 0:
-                item = sfAnimations.items.add()
-                sfAnimations.itemIndex = len(sfAnimations.items) - 1
-                item.text = sfKeySetting.text
-                item.keyTime = sfKeySetting.keyTime
-                item.extend = sfKeySetting.extend
-                item.center = sfKeySetting.center
-                item.collectionID = sfKeySetting.collectionID
-                added = True
-        if not added:
-            self.report({'INFO'}, "The item could not be added due to missing input or duplicated data.")
+        
+        if self.action == "ADD" or self.action == "UPDATE":
+            # convert the string according to the available characters
+            characters = bpy.data.collections[sfAnimations.items[context.scene.splitFlapAnimationIndex].collectionID]["SplitFlapSettings.characters"]
+            newText = self.formatText(sfKeySetting.text, characters)
+            if len(newText) != len(sfKeySetting.text):
+                self.report({'INFO'}, "The text %s cannot be added as some character is not present in the set." % (sfKeySetting.text, characters))
+                return {'FINISHED'}
+            sfKeySetting.formattedText = newText
+            timeDiffPrev = self.feasibleTime(context, deltaIndex = -1)
+            timeDiffNext = self.feasibleTime(context, deltaIndex = 1)
+            if timeDiffPrev < 0:
+                self.report({'INFO'}, "The time is not sufficient to flap from the previous text. The time diff. amounts to %.2f s." % timeDiffPrev)
+                return {'FINISHED'}
+            elif timeDiffNext < 0:
+                self.report({'INFO'}, "The time is not sufficient to flap to the next text. The time diff. amounts to %.2f s." % timeDiffNext)
+                return {'FINISHED'}
+            elif len(sfKeySetting.collectionID) > 0 and sfKeySetting.collectionID in bpy.data.collections:
+                # check if there is already an entry for the same time
+                frameSettings = [frame for frame in sfAnimations.items if frame.collectionID == sfKeySetting.collectionID and abs(frame.keyTime - sfKeySetting.keyTime) < 0.1]
+                done = False
+                if self.action == "UPDATE":
+                    index = context.scene.splitFlapAnimationIndex
+                    item = sfAnimations.items[index]
+                    item.text = sfKeySetting.text
+                    item.formattedTest = sfKeySetting.formattedText
+                    item.extend = sfKeySetting.extend
+                    item.keyTime = sfKeySetting.keyTime
+                    item.center = sfKeySetting.center
+                    done = True
+                elif len(frameSettings) == 0:
+                    item = sfAnimations.items.add()
+                    sfAnimations.itemIndex = len(sfAnimations.items) - 1
+                    item.text = sfKeySetting.text
+                    item.formattedText = sfKeySetting.formattedText
+                    item.keyTime = sfKeySetting.keyTime
+                    item.extend = sfKeySetting.extend
+                    item.center = sfKeySetting.center
+                    item.collectionID = sfKeySetting.collectionID
+                    done = True
+                if not done:
+                    self.report({'INFO'}, "The item could not be added/updated due to missing input or duplicated data.")
+        elif self.action == "DELETE":
+            index = context.scene.splitFlapAnimationIndex
+            if index >= 0:
+                sfAnimations.items.remove(index)
         return {'FINISHED'}
-
+    
+    def formatText(self, text, characters):
+        print("format '%s'" % text)
+        newTextList = []
+        for char in text:
+            if char in characters:
+                newTextList.append(char)
+            elif char.lower() in characters:
+                newTextList.append(char.lower())
+            elif char.upper() in characters:
+                newTextList.append(char.upper())
+        return "".join(newTextList)
+    
+    def feasibleTime(self, context, deltaIndex = -1):
+        sfKeySetting = context.scene.splitFlapKeySetting
+        sfAnimations = context.scene.splitFlapAnimations
+        
+        # get time and text to add
+        index = context.scene.splitFlapAnimationIndex
+        collection = bpy.data.collections[sfAnimations.items[index].collectionID]
+        flapTime = collection["SplitFlapSettings.flapTime"]
+        characters = collection["SplitFlapSettings.characters"]
+        
+        size = len(sfAnimations.items)
+        for i in range(size):
+            if len(sfAnimations.items[i].formattedText) == 0:
+                sfAnimations.items[i].formattedText = self.formatText(sfAnimations.items[i].text, characters)
+        
+        flapCount = len(collection.objects)
+        frames = [(item.keyTime, item.text, False) for item in sfAnimations.items]
+        if self.action == "UPDATE":
+            frames[index][0] = sfKeySetting.keyTime
+            frames[index][1] = sfKeySetting.formattedText
+            frames[index][2] = True
+        else:
+            frames.append((sfKeySetting.keyTime, sfKeySetting.text, True))
+        # check if the time difference is enough to switch to the new text
+        frames.sort(key=lambda x:x[0])
+        newIndex = -1
+        for i in range(len(frames)):
+            if frames[i][2]:
+                newIndex = i
+                break
+        if deltaIndex < 0: # check previous
+            if newIndex > 0: 
+                deltaT = frames[newIndex][0] - frames[newIndex-1][0]
+                previousString = self.__getFinalString(flapCount, sfAnimations.items, newIndex-1)
+                newString = self.__getFinalString(flapCount, sfAnimations.items, newIndex)
+                print("characters %s newString %s" % (characters, newString))
+                neededTime = max([self.__getFlaps(entry[0], entry[1], characters) for entry in zip(previousString, newString)]) * flapTime
+                return neededTime - deltaT
+            else:
+                if frames[newIndex][0] < 0.01:
+                    return 0
+                else:
+                    fromString = " " * flapCount
+                    newString = self.__getFinalString(flapCount, sfAnimations.items, newIndex)
+                    neededTime = max([self.__getFlaps(entry[0], entry[1], characters) for entry in zip(previousString, newString)]) * flapTime
+                    return neededTime - frames[newIndex][0]
+        else: # check next
+            if newIndex == len(sfAnimations.items) - 1:
+                return 0
+            else:
+                deltaT = frames[newIndex+1][0] - frames[newIndex][0]
+                nextString = self.__getFinalString(flapCount, sfAnimations.items, newIndex+1)
+                newString = self.__getFinalString(flapCount, sfAnimations.items, newIndex)
+                neededTime = max([self.__getFlaps(entry[0], entry[1], characters) for entry in zip(newString, nextString)]) * flapTime
+                return neededTime - deltaT
+    
+    def __getFinalString(self, length, items, index):
+        textLen = len(items[index].formattedText)
+        if textLen >= length:
+            return items[index].formattedText[:length]
+        if items[index].center:
+            indent = (length - textLen)//2
+            remainder = length - indent - textLen
+            return " " * indent + items[index].formattedText + " " * remainder
+        elif items[index].extend:
+            remainder = length - textLen
+            return items[index].formattedText + " " * remainder
+        else:
+            previousString = self.__getFinalString(length, items, index-1)
+            return items[index].formattedText + previousString[textLen:]
+    
+    def __getFlaps(self, fromChar, toChar, characters):
+        print("from %s to %s in %s" % (fromChar, toChar, characters))
+        startIndex = characters.index(fromChar)
+        targetIndex = characters.index(toChar)
+        return targetIndex - startIndex if targetIndex >= startIndex else len(characters) - startIndex + targetIndex
 
 class SplitFlapApplyFrames(bpy.types.Operator):
     bl_idname = "object.splitflapapplyframes"
@@ -445,7 +611,9 @@ class SplitFlapController(bpy.types.Operator):
             collection["SplitFlapSettings.characters"] = sfTool.characters
             collection["SplitFlap"] = self.collectionMarker
             bpy.context.scene.collection.children.link(collection)
+            bounds = []
             for splitFlapItem in splitFlapItems:
+                bounds.append(splitFlapItem.bound_box)
                 collection.objects.link(splitFlapItem)
                 if splitFlapItem == splitFlapItems[0]: #unlink original
                     otherCollections = [collection.name for collection in splitFlapItem.users_collection if collection.name != collName]
@@ -454,7 +622,66 @@ class SplitFlapController(bpy.types.Operator):
                             bpy.context.scene.collection.objects.unlink(splitFlapItem) 
                         else:
                             bpy.data.collections[otherCollName].objects.unlink(splitFlapItem)
+                            
+            # optionally create the frame mesh / cut out holes for the flap items
+            if sfTool.createFrame:
+                bpy.context.view_layer.update()
+                locBegin = getBoundingBoxCenter(splitFlapItems[0])
+                locEnd = getBoundingBoxCenter(splitFlapItems[-1])
+                dimensions = splitFlapItems[0].dimensions
+                add = (0.1, 0.05, 0.1)
+                factor = 0.5
+                xMin = locBegin.x - (factor + add[0]) * dimensions.x 
+                xMax = locEnd.x + (factor + add[0]) * dimensions.x
+                yMin = locBegin.y - (factor + add[1]) * dimensions.y
+                yMax = locEnd.y + (factor + add[1]) * dimensions.y
+                zMin = locBegin.z - (factor + add[2]) * dimensions.z 
+                zMax = locEnd.z + (factor + add[2]) * dimensions.z
+                frameSize = (0.5 * abs(xMax-xMin), 0.5 * abs(yMax-yMin), 0.5 * abs(zMax-zMin))
+                frameCenter = (0.5 * (xMin + xMax), 0.5 * (yMin + yMax), 0.5 * (zMin + zMax))
+                bpy.ops.mesh.primitive_cube_add(location=frameCenter, scale=frameSize)
+                frameObj = context.object
+                
+                # add cutters for the split flap items
+                tempSelectedObj = bpy.context.view_layer.objects.active
+                bpy.ops.object.select_all(action='DESELECT')
+                cutters = []
+                for splitFlapItem in splitFlapItems:
+                    loc = getBoundingBoxCenter(splitFlapItem)
+                    dim = splitFlapItem.dimensions
+                    loc.y -= 0.15*dim.y
+                    scaled = (dim.x*1.03*0.5, dim.y*1.1*0.5, dim.z*1.02*0.5)
+                    bpy.ops.mesh.primitive_cube_add(location=loc, scale=scaled)
+                    cutterObj = context.object
+                    cutters.append(cutterObj)
+                # join cutter objects
+                with bpy.context.temp_override(active_object=cutters[0], selected_editable_objects=cutters):
+                    bpy.ops.object.join()
+                boolObj = cutters[0]
+                boolModifier = frameObj.modifiers.new(type="BOOLEAN", name="cutFrame")
+                boolModifier.object = boolObj
+                boolModifier.operation = 'DIFFERENCE'
+                bpy.context.view_layer.objects.active = frameObj
+                bpy.ops.object.modifier_apply(modifier="cutFrame")
+                bpy.ops.object.select_all(action='DESELECT')
+                boolObj.select_set(True)
+                bpy.ops.object.delete()
+                # apply material
+                frameMat = bpy.data.materials.get("BlackMetal")
+                if frameMat is not None:
+                    if frameObj.data.materials:
+                        frameObj.data.materials[0] = frameMat
+                    else:
+                        frameObj.data.materials.append(frameMat)
+                
         return {'FINISHED'}
+
+
+def getBoundingBoxCenter(obj):
+    localCenter = 0.125 * sum((Vector(b) for b in obj.bound_box), Vector())
+    print("\t\tlocalCenter %s" % localCenter)
+    print("\t\tMatrix world %s" % (obj.matrix_world))
+    return obj.matrix_world @ localCenter
 
 def duplicateObject(obj, data=True, actions=True, collection=None):
     objCopy = obj.copy()
