@@ -266,7 +266,6 @@ class SplitFlapAnimationList(bpy.types.PropertyGroup):
 class SplitFlapAnimationController(bpy.types.Operator):
     bl_idname = "object.splitflapanimationcontroller"
     bl_label = "Add Split Flap Animation"
-    # TODO: see https://b3d.interplanety.org/en/calling-functions-by-pressing-buttons-in-blender-custom-ui/
     action: bpy.props.EnumProperty(
         items=[
             ('DELETE', 'remove entry', 'remove entry'),
@@ -279,14 +278,20 @@ class SplitFlapAnimationController(bpy.types.Operator):
         sfKeySetting = context.scene.splitFlapKeySetting
         sfAnimations = context.scene.splitFlapAnimations
         
+        # checks
+        if len(sfKeySetting.collectionID) == 0:
+            self.report({'INFO'}, "Please choose a collection of split flap items to animate!")
+            return {'FINISHED'}
+        
         if self.action == "ADD" or self.action == "UPDATE":
-            # convert the string according to the available characters
-            characters = bpy.data.collections[sfAnimations.items[context.scene.splitFlapAnimationIndex].collectionID]["SplitFlapSettings.characters"]
+            # convert the string according to the available characters # TODO: what if is the first entry?
+            characters = bpy.data.collections[sfKeySetting.collectionID]["SplitFlapSettings.characters"]
             newText = self.formatText(sfKeySetting.text, characters)
             if len(newText) != len(sfKeySetting.text):
                 self.report({'INFO'}, "The text %s cannot be added as some character is not present in the set." % (sfKeySetting.text, characters))
                 return {'FINISHED'}
             sfKeySetting.formattedText = newText
+
             timeDiffPrev = self.feasibleTime(context, deltaIndex = -1)
             timeDiffNext = self.feasibleTime(context, deltaIndex = 1)
             if timeDiffPrev < 0:
@@ -341,7 +346,9 @@ class SplitFlapAnimationController(bpy.types.Operator):
     def feasibleTime(self, context, deltaIndex = -1):
         sfKeySetting = context.scene.splitFlapKeySetting
         sfAnimations = context.scene.splitFlapAnimations
-        
+        if len(sfAnimations.items) == 0:
+            return 0
+            
         # get time and text to add
         index = context.scene.splitFlapAnimationIndex
         collection = bpy.data.collections[sfAnimations.items[index].collectionID]
