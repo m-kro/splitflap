@@ -1,6 +1,10 @@
 # License
 This work is licensed under the MIT license.
 
+# Example
+
+![Example display](example.png)
+
 # Installation
 The folder ./SplitFlapTable contains all the necessary files. Make a zip archive from it and you are ready to 
 install in in the Blender UI: 
