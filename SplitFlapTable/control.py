@@ -288,7 +288,7 @@ class SplitFlapAnimationController(bpy.types.Operator):
             characters = bpy.data.collections[sfKeySetting.collectionID]["SplitFlapSettings.characters"]
             newText = self.formatText(sfKeySetting.text, characters)
             if len(newText) != len(sfKeySetting.text):
-                self.report({'INFO'}, "The text %s cannot be added as some character is not present in the set." % (sfKeySetting.text, characters))
+                self.report({'INFO'}, "The text %s cannot be added as some character is not present in the set %s." % (sfKeySetting.text, characters))
                 return {'FINISHED'}
             sfKeySetting.formattedText = newText
 
@@ -361,11 +361,9 @@ class SplitFlapAnimationController(bpy.types.Operator):
                 sfAnimations.items[i].formattedText = self.formatText(sfAnimations.items[i].text, characters)
         
         flapCount = len(collection.objects)
-        frames = [(item.keyTime, item.text, False) for item in sfAnimations.items]
+        frames = [(item.keyTime, item.formattedText, False) for item in sfAnimations.items]
         if self.action == "UPDATE":
-            frames[index][0] = sfKeySetting.keyTime
-            frames[index][1] = sfKeySetting.formattedText
-            frames[index][2] = True
+            frames[index] = (sfKeySetting.keyTime, sfKeySetting.formattedText, True)
         else:
             frames.append((sfKeySetting.keyTime, sfKeySetting.text, True))
         # check if the time difference is enough to switch to the new text
@@ -376,45 +374,48 @@ class SplitFlapAnimationController(bpy.types.Operator):
                 newIndex = i
                 break
         if deltaIndex < 0: # check previous
+            print("newIndex %d text %s frames %s" % (newIndex, sfKeySetting.text, str(frames)))
             if newIndex > 0: 
                 deltaT = frames[newIndex][0] - frames[newIndex-1][0]
-                previousString = self.__getFinalString(flapCount, sfAnimations.items, newIndex-1)
-                newString = self.__getFinalString(flapCount, sfAnimations.items, newIndex)
+                newString = self.__getFinalString(flapCount, sfAnimations.items, newIndex, sfKeySetting)
+                previousString = self.__getFinalString(flapCount, sfAnimations.items, newIndex-1, sfKeySetting)
                 print("characters %s newString %s" % (characters, newString))
                 neededTime = max([self.__getFlaps(entry[0], entry[1], characters) for entry in zip(previousString, newString)]) * flapTime
-                return neededTime - deltaT
+                return deltaT - neededTime
             else:
                 if frames[newIndex][0] < 0.01:
                     return 0
                 else:
-                    fromString = " " * flapCount
-                    newString = self.__getFinalString(flapCount, sfAnimations.items, newIndex)
-                    neededTime = max([self.__getFlaps(entry[0], entry[1], characters) for entry in zip(previousString, newString)]) * flapTime
-                    return neededTime - frames[newIndex][0]
+                    fromString = "A" * flapCount
+                    newString = self.__getFinalString(flapCount, sfAnimations.items, newIndex, sfKeySetting)
+                    neededTime = max([self.__getFlaps(entry[0], entry[1], characters) for entry in zip(fromString, newString)]) * flapTime
+                    return frames[newIndex][0] - neededTime
         else: # check next
-            if newIndex == len(sfAnimations.items) - 1:
+            if newIndex > len(sfAnimations.items) - 1:
                 return 0
             else:
                 deltaT = frames[newIndex+1][0] - frames[newIndex][0]
-                nextString = self.__getFinalString(flapCount, sfAnimations.items, newIndex+1)
-                newString = self.__getFinalString(flapCount, sfAnimations.items, newIndex)
+                nextString = self.__getFinalString(flapCount, sfAnimations.items, newIndex+1, sfKeySetting)
+                newString = self.__getFinalString(flapCount, sfAnimations.items, newIndex, sfKeySetting)
                 neededTime = max([self.__getFlaps(entry[0], entry[1], characters) for entry in zip(newString, nextString)]) * flapTime
-                return neededTime - deltaT
+                return deltaT - neededTime
     
-    def __getFinalString(self, length, items, index):
-        textLen = len(items[index].formattedText)
+    def __getFinalString(self, length, items, index, newItem):
+        if newItem is None:
+            newItem = items[index]
+        textLen = len(newItem.formattedText)
         if textLen >= length:
-            return items[index].formattedText[:length]
-        if items[index].center:
+            return newItem.formattedText[:length]
+        if newItem.center:
             indent = (length - textLen)//2
             remainder = length - indent - textLen
-            return " " * indent + items[index].formattedText + " " * remainder
-        elif items[index].extend:
+            return " " * indent + newItem.formattedText + " " * remainder
+        elif newItem.extend:
             remainder = length - textLen
-            return items[index].formattedText + " " * remainder
+            return newItem.formattedText + " " * remainder
         else:
-            previousString = self.__getFinalString(length, items, index-1)
-            return items[index].formattedText + previousString[textLen:]
+            previousString = self.__getFinalString(length, items, index-1, None)
+            return newItem.formattedText + previousString[textLen:]
     
     def __getFlaps(self, fromChar, toChar, characters):
         print("from %s to %s in %s" % (fromChar, toChar, characters))
@@ -460,10 +461,10 @@ class SplitFlapApplyFrames(bpy.types.Operator):
                 singleChars = [c for c in frameSetting.text]
                 for j in range(0, len(singleChars)):
                     if singleChars[j] not in characters:
-                        if islower(singleChars[j]) and upper(singleChars[j]) in characters:
-                            singleChars[i] = upper(singleChars[j])
-                        elif isupper(singleChars[j]) and lower(singleChars[j]) in characters:
-                            singleChars[i] = lower(singleChars[j])
+                        if singleChars[j].islower() and singleChars[j].upper() in characters:
+                            singleChars[j] = singleChars[j].upper()
+                        elif singleChars[j].isupper() and singleChars[j].lower() in characters:
+                            singleChars[j] = singleChars[j].lower()
                 frameSetting.text = "".join(singleChars)
                 i = 0
                 if frameSetting.extend:
