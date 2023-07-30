@@ -18,5 +18,9 @@ python instance that ships with the Blender installation. For this, open a comma
 python -m pip install pillow
 ```
 
+# Usage
+TODO
+<!--The addon creates its own menus in the Blender 3D View accessible -->
+
 # Compatibility
 Developed using Blender 3.4
