@@ -39,6 +39,9 @@ class SplitFlapPanel(bpy.types.Panel):
         row = layout.row()
         row.prop(sfTool, "characters")
         row = layout.row()
+        row.prop(sfTool, "charWidth")
+        row.prop(sfTool, "charHeight")
+        row = layout.row()
         if isWin:
             row.prop(sfTool, "fontChoice")
         else:
@@ -61,7 +64,6 @@ class SplitFlapAnimationPanel(bpy.types.Panel):
     bl_space_type = "VIEW_3D"
     bl_region_type= "UI"
     bl_category = "Split Flap"
-    # bl_parent_id = ""
 
     def draw(self, context):
         layout = self.layout
@@ -75,8 +77,6 @@ class SplitFlapAnimationPanel(bpy.types.Panel):
         row.prop(sfKeySetting, "keyTime")
         row = layout.row()
         row.prop(sfKeySetting, "extend")
-        #row = layout.row()
-        #row.prop(sfKeySetting, "collectionID", expand=True)
         row = layout.row()
         row.prop(sfKeySetting, "collection", expand=True)
         row = layout.row()
@@ -96,7 +96,6 @@ class SplitFlapAnimationListItem(bpy.types.UIList):
                   active_propname, index):
         # Make sure your code supports all 3 layout types
         if self.layout_type in {'DEFAULT', 'COMPACT'}:
-            #print(item)
             layout.label(text="%s (%s t %.2f)" % (item.text, item.collectionID, item.keyTime))
         elif self.layout_type in {'GRID'}:
             layout.alignment = 'CENTER'
@@ -160,6 +159,20 @@ class SplitFlapSettings(bpy.types.PropertyGroup):
         description="Available characters in every split flap item",
         default="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-+.?! ",
         maxlen=1024,
+    )
+    charWidth : bpy.props.FloatProperty(
+        name = "Relative char width",
+        description = "Relative part of the flap width the char should fill at most",
+        default = 0.7,
+        min = 0.3,
+        max = 1.5
+    )
+    charHeight : bpy.props.FloatProperty(
+        name = "Relative char height",
+        description = "Relative part of the flap height the char should fill at most",
+        default = 0.7,
+        min = 0.3,
+        max = 1.5
     )
     fontName : bpy.props.StringProperty(
         name="Font",
@@ -284,7 +297,7 @@ class SplitFlapAnimationController(bpy.types.Operator):
             return {'FINISHED'}
         
         if self.action == "ADD" or self.action == "UPDATE":
-            # convert the string according to the available characters # TODO: what if is the first entry?
+            # convert the string according to the available characters
             characters = bpy.data.collections[sfKeySetting.collectionID]["SplitFlapSettings.characters"]
             newText = self.formatText(sfKeySetting.text, characters)
             if len(newText) != len(sfKeySetting.text):
@@ -569,7 +582,9 @@ class SplitFlapController(bpy.types.Operator):
         fontColor.append(255)
         backgroundColor = [min(255, int(255*round(value))) for value in [sfTool.backgroundColor.r, sfTool.backgroundColor.g, sfTool.backgroundColor.b]]
         backgroundColor.append(255)
-        createCharactersTexture(characters=sfTool.characters, fontPath=fontPath, output=texturePath, color=tuple(fontColor), background=tuple(backgroundColor))
+        createCharactersTexture(characters=sfTool.characters, fontPath=fontPath, output=texturePath, 
+                                color=tuple(fontColor), background=tuple(backgroundColor),
+                                fontFactorWidth=sfTool.charWidth, fontFactorHeight=sfTool.charHeight)
         
         splitFlapItems = []
         prefix = '' if " " in sfTool.identPrefix else sfTool.identPrefix
@@ -643,8 +658,9 @@ class SplitFlapController(bpy.types.Operator):
                 xMax = locEnd.x + (factor + add[0]) * dimensions.x
                 yMin = locBegin.y - (factor + add[1]) * dimensions.y
                 yMax = locEnd.y + (factor + add[1]) * dimensions.y
-                zMin = locBegin.z - (factor + add[2]) * dimensions.z 
-                zMax = locEnd.z + (factor + add[2]) * dimensions.z
+                zMin = locEnd.z - (factor + add[2]) * dimensions.z 
+                zMax = locBegin.z + (factor + add[2]) * dimensions.z
+                print("X %.2f - %.2f\nY  %.2f - %.2f\nZ %.2f - %.2f" % (xMin, xMax, yMin, yMax, zMin, zMax))
                 frameSize = (0.5 * abs(xMax-xMin), 0.5 * abs(yMax-yMin), 0.5 * abs(zMax-zMin))
                 frameCenter = (0.5 * (xMin + xMax), 0.5 * (yMin + yMax), 0.5 * (zMin + zMax))
                 bpy.ops.mesh.primitive_cube_add(location=frameCenter, scale=frameSize)
@@ -687,8 +703,8 @@ class SplitFlapController(bpy.types.Operator):
 
 def getBoundingBoxCenter(obj):
     localCenter = 0.125 * sum((Vector(b) for b in obj.bound_box), Vector())
-    print("\t\tlocalCenter %s" % localCenter)
-    print("\t\tMatrix world %s" % (obj.matrix_world))
+    #print("\t\tlocalCenter %s" % localCenter)
+    #print("\t\tMatrix world %s" % (obj.matrix_world))
     return obj.matrix_world @ localCenter
 
 def duplicateObject(obj, data=True, actions=True, collection=None):

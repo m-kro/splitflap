@@ -8,7 +8,7 @@ import os
 import math
 from PIL import Image, ImageDraw, ImageFont
 
-def createCharactersTexture(charSpace=(125,200), characters="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-+.?! ", fontPath="bahnschrift.ttf", color="white", background="black", output="characters.png"):
+def createCharactersTexture(charSpace=(125,200), characters="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-+.?! ", fontPath="bahnschrift.ttf", color="white", background="black", output="characters.png", fontFactorWidth=0.7, fontFactorHeight=0.65):
     itemsPerSide = math.ceil(math.sqrt(len(characters)))
     imgSize = (charSpace[0]*itemsPerSide, charSpace[1]*itemsPerSide)
     
@@ -16,7 +16,7 @@ def createCharactersTexture(charSpace=(125,200), characters="ABCDEFGHIJKLMNOPQRS
     im = Image.new("RGB", imgSize, color=background)
     
     # define the character size and the base line (should be at max .75 of charSpace height, tested on zero = 0)
-    targetSize = (int(0.7*charSpace[0]), int(0.65*charSpace[1]))
+    targetSize = (int(fontFactorWidth*charSpace[0]), int(fontFactorHeight*charSpace[1]))
     charSize = 40
     acceptedError = 0.05
     increment = 2
