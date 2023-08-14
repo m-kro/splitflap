@@ -77,6 +77,7 @@ class SplitFlapAnimationPanel(bpy.types.Panel):
         row.prop(sfKeySetting, "keyTime")
         row = layout.row()
         row.prop(sfKeySetting, "extend")
+        row.prop(sfKeySetting, "center")
         row = layout.row()
         row.prop(sfKeySetting, "collection", expand=True)
         row = layout.row()
@@ -387,12 +388,12 @@ class SplitFlapAnimationController(bpy.types.Operator):
                 newIndex = i
                 break
         if deltaIndex < 0: # check previous
-            print("newIndex %d text %s frames %s" % (newIndex, sfKeySetting.text, str(frames)))
+            #print("newIndex %d text %s frames %s" % (newIndex, sfKeySetting.text, str(frames)))
             if newIndex > 0: 
                 deltaT = frames[newIndex][0] - frames[newIndex-1][0]
                 newString = self.__getFinalString(flapCount, sfAnimations.items, newIndex, sfKeySetting)
                 previousString = self.__getFinalString(flapCount, sfAnimations.items, newIndex-1, sfKeySetting)
-                print("characters %s newString %s" % (characters, newString))
+                #print("characters %s newString %s" % (characters, newString))
                 neededTime = max([self.__getFlaps(entry[0], entry[1], characters) for entry in zip(previousString, newString)]) * flapTime
                 return deltaT - neededTime
             else:
@@ -612,8 +613,8 @@ class SplitFlapController(bpy.types.Operator):
             width = splitFlapItems[0].dimensions.x
             height = splitFlapItems[0].dimensions.z
             d = 1
-            for h in range(0, sfTool.colCount):
-                for v in range(0, sfTool.rowCount):
+            for v in range(0, sfTool.rowCount):
+                for h in range(0, sfTool.colCount):
                     if h == 0 and v == 0:
                         continue
                     objCopy = duplicateObject(splitFlapItems[0])
@@ -690,6 +691,8 @@ class SplitFlapController(bpy.types.Operator):
                 bpy.ops.object.select_all(action='DESELECT')
                 boolObj.select_set(True)
                 bpy.ops.object.delete()
+                frameObj.name = "%s_frame" % collName
+                moveToCollection(frameObj, collection)
                 # apply material
                 frameMat = bpy.data.materials.get("BlackMetal")
                 if frameMat is not None:
@@ -706,6 +709,13 @@ def getBoundingBoxCenter(obj):
     #print("\t\tlocalCenter %s" % localCenter)
     #print("\t\tMatrix world %s" % (obj.matrix_world))
     return obj.matrix_world @ localCenter
+
+def moveToCollection(obj, collection, exclusive=True):
+    if exclusive:
+        for coll in obj.users_collection:
+            coll.objects.unlink(obj)
+    if obj.name not in collection.objects:
+        collection.objects.link(obj)
 
 def duplicateObject(obj, data=True, actions=True, collection=None):
     objCopy = obj.copy()
