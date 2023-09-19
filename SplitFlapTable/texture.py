@@ -8,8 +8,9 @@ import os
 import math
 from PIL import Image, ImageDraw, ImageFont
 
-def createCharactersTexture(charSpace=(125,200), characters="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-+.?! ", fontPath="bahnschrift.ttf", color="white", background="black", output="characters.png", fontFactorWidth=0.7, fontFactorHeight=0.65):
-    itemsPerSide = math.ceil(math.sqrt(len(characters)))
+def createCharactersTexture(charSpace=(125,200), characters="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-+.?! ", fontPath="bahnschrift.ttf", color="white", background="black", output="characters.png", fontFactorWidth=0.7, fontFactorHeight=0.65, itemsPerSide=None):
+    if itemsPerSide is None:
+        itemsPerSide = math.ceil(math.sqrt(len(characters)))
     imgSize = (charSpace[0]*itemsPerSide, charSpace[1]*itemsPerSide)
     
     # create the img
@@ -42,7 +43,7 @@ def createCharactersTexture(charSpace=(125,200), characters="ABCDEFGHIJKLMNOPQRS
         dChar = ImageDraw.Draw(imChar)
         textWidth, textHeight = dChar.textsize(c, font=font)
         dChar.text((0.5*charSpace[0] - 0.5*textWidth, 0.5*charSpace[1] - 0.5*textHeight), c, color, font)
-        col = i % itemsPerSide  
+        col = i % itemsPerSide
         row = int(i/itemsPerSide)
         boundaries = [col*charSpace[0], row*charSpace[1], (col+1)*charSpace[0], (row+1)*charSpace[1]]
         d.rectangle(boundaries, fill=background, outline=color)

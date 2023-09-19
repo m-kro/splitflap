@@ -11,6 +11,7 @@ import addon_utils
 from mathutils import Vector
 
 from .texture import createCharactersTexture, findFont, getFonts
+from .structures import SplitFlapKeySettings, SplitFlapSettings
 
 class SplitFlapPanel(bpy.types.Panel):
     bl_label = "SplitFlap Panel"
@@ -88,7 +89,6 @@ class SplitFlapAnimationPanel(bpy.types.Panel):
         #row.label(text="SplitFlapApplyFrames")
         row.operator("object.splitflapapplyframes")
 
-
 class SplitFlapAnimationListItem(bpy.types.UIList):
     bl_label = "SplitFlapAnimation List Item"
     bl_idname = "OBJECT_UL_SplitFlapAnimationListItem"
@@ -101,177 +101,6 @@ class SplitFlapAnimationListItem(bpy.types.UIList):
         elif self.layout_type in {'GRID'}:
             layout.alignment = 'CENTER'
             layout.label(text="")
-
-def flapSettings_getFonts(scene, context):
-    items = []
-    fonts = getFonts()
-    for font in fonts:
-        items.append((font, font, "available font"))
-    return items
-
-def flapSettings_updateFont(self, context):
-    self.fontName = self.fontChoice
-
-class SplitFlapSettings(bpy.types.PropertyGroup):
-    rowCount : bpy.props.IntProperty(
-        name = "Row count",
-        description="Number of rows of split flap items",
-        default = 1,
-        min = 1,
-        max = 10
-    )
-    colCount : bpy.props.IntProperty(
-        name = "Column count",
-        description="Number of columns of split flap items",
-        default = 12,
-        min = 1,
-        max = 100
-    )
-    horizontalGap : bpy.props.FloatProperty(
-        name = "Horizontal gap",
-        description = "Horizontal gap between flaps in meters",
-        default = 0.02,
-        min = 0.01,
-        max = 1.
-    )
-    verticalGap : bpy.props.FloatProperty(
-        name = "Vertical gap",
-        description = "Vertical gap between flaps in meters",
-        default = 0.04,
-        min = 0.01,
-        max = 1.
-    )
-    flapRadius : bpy.props.FloatProperty(
-        name = "Flap radius",
-        description = "Radius in meters of the flap circle",
-        default = 0.02,
-        min = 0.005,
-        max = 1.
-    )
-    flapTime : bpy.props.FloatProperty(
-        name = "Flap time",
-        description = "Time in seconds to flap one card further",
-        default = 0.1,
-        min = 0.1,
-        max = 1.
-    )
-    characters : bpy.props.StringProperty(
-        name="Characters",
-        description="Available characters in every split flap item",
-        default="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-+.?! ",
-        maxlen=1024,
-    )
-    charWidth : bpy.props.FloatProperty(
-        name = "Relative char width",
-        description = "Relative part of the flap width the char should fill at most",
-        default = 0.7,
-        min = 0.3,
-        max = 1.5
-    )
-    charHeight : bpy.props.FloatProperty(
-        name = "Relative char height",
-        description = "Relative part of the flap height the char should fill at most",
-        default = 0.7,
-        min = 0.3,
-        max = 1.5
-    )
-    fontName : bpy.props.StringProperty(
-        name="Font",
-        description="Font to use for the characters",
-        default="Bahnschrift",
-        maxlen=1024,
-    )
-    fontChoice : bpy.props.EnumProperty(
-        name="Font",
-        description="Font to use for the characters",
-        items=flapSettings_getFonts,
-        update=flapSettings_updateFont
-    )
-    identPrefix : bpy.props.StringProperty(
-        name="Identifier",
-        description="Preferred identifier (prefix) for the collection and its split flap items",
-        default="SplitFlap",
-        maxlen=1024,
-    )
-    fontColor : bpy.props.FloatVectorProperty(
-        name="Font color",
-        subtype = "COLOR",
-        description="Color of the letters of the split flap items",
-        default=(1.0,1.0,1.0)
-    )
-    backgroundColor : bpy.props.FloatVectorProperty(
-        name="Background color",
-        subtype = "COLOR",
-        description="Base color of the split flap items",
-        default=(1.0,0.0,0.0)
-    )
-    createFrame : bpy.props.BoolProperty(
-        name = "Create frame",
-        description = "Create a frame shape to house the flaps",
-        default = False
-    )
-
-def keySettings_poll(self, object):
-    return object["SplitFlap"] is not None
-
-def keySettings_update(self, context):
-    self.collectionID = self.collection.name
-
-def flapAnimation_updateDisplay(self, context):
-    index = self.splitFlapAnimationIndex
-    item = self.splitFlapAnimations.items[index]
-    print("updateDisplay, set %s %.2f" % (item.text, item.keyTime))
-    self.splitFlapKeySetting.text = item.text
-    self.splitFlapKeySetting.keyTime = item.keyTime
-
-class SplitFlapKeySettings(bpy.types.PropertyGroup):
-    text : bpy.props.StringProperty(
-        name="Original text input",
-        description="Original text input by the user",
-        default="",
-        maxlen=1024,
-    )
-    formattedText : bpy.props.StringProperty(
-        name="Text to display",
-        description="Text to display when the split flap collection is initialised, taking into account the available characters",
-        default="",
-        maxlen=1024,
-    )
-    keyTime : bpy.props.FloatProperty(
-        name = "Time key",
-        description = "Time in seconds when the flap starts switching to the target text",
-        default = 5,
-        min = 0,
-        max = 240
-    )
-    extend : bpy.props.BoolProperty(
-        name = "Fill with space",
-        description = "Fill texts shorter than the flip collection with space characters",
-        default = True
-    )
-    center : bpy.props.BoolProperty(
-        name = "Center text",
-        description = "Add space characters such that the given text is centered",
-        default = False
-    )
-    collectionID : bpy.props.StringProperty(
-        name="Collection ID",
-        description="The ID of the split flap collection this key setting should be applied to",
-        default="",
-        maxlen=1024,
-    )
-    collection : bpy.props.PointerProperty(
-        name="Chosen collection",
-        type=bpy.types.Collection,
-        description="",
-        poll=keySettings_poll,
-        update=keySettings_update,
-    )
-    selected : bpy.props.BoolProperty(
-        name="Selected",
-        description="Marker to remember if currrently selected in the UI",
-        default = False
-    )
 
 class SplitFlapAnimationList(bpy.types.PropertyGroup):
     itemIndex : bpy.props.IntProperty(name="itemIndex", default=0)
@@ -535,12 +364,14 @@ class SplitFlapController(bpy.types.Operator):
     #bl_options = {'REGISTER', 'UNDO'}
     
     # template for split flaps
-    templateFile : bpy.props.StringProperty(default="splitFlapTemplate.blend")
     templatePath : bpy.props.StringProperty(default='')
+    templateFile : bpy.props.StringProperty(default="splitFlapTemplate.blend")
     innerPath = "Object"
-    objectName = "SplitFlapItem"
+    cardName = "CardExample"
+    itemName = "SplitFlapItem"
     materialName = "Mat.Flapcard"
     collectionMarker = "SplitFlap"
+    uvAttribute = "MyUVMap"
     
     def execute(self, context):
         # find directory to save the font to
@@ -557,150 +388,202 @@ class SplitFlapController(bpy.types.Operator):
             self.report({'INFO'}, "Cannot find the template blend file %." % self.templateFile)
             return
         oldObjectNames = [obj.name for obj in context.scene.objects]
-        bpy.ops.wm.append(
-            filepath=os.path.join(self.templatePath, self.innerPath, self.objectName),
-            directory=os.path.join(self.templatePath, self.innerPath),
-            filename=self.objectName
-        )
-        # import material too
-        with bpy.data.libraries.load(self.templatePath) as (dataFrom, dataTo):
-            dataTo.materials = dataFrom.materials
-        # pass the current SplitFlapProperties to Geometry Nodes input where necessary
-        newObjectNames = [obj.name for obj in context.scene.objects if obj.name not in oldObjectNames and obj.name.startswith(self.objectName)]
-        sfTool = context.scene.splitFlapTool
+        templateFlapItem = None if len(context.scene.splitFlapTemplate ) == 0 else bpy.data.objects[context.scene.splitFlapTemplate]
+        cardTemplate = None if len(context.scene.cardTemplate) == 0 else bpy.data.objects[context.scene.cardTemplate]
+        if templateFlapItem is None or cardTemplate is None:
+            #absFilePath = bpy.path.abspath(self.templatePath)
+            bpy.ops.wm.append(
+                filepath=os.path.join(self.templatePath, self.innerPath, self.itemName),
+                directory=os.path.join(self.templatePath, self.innerPath),
+                filename=self.itemName
+            )
+            bpy.ops.wm.append(
+                filepath=os.path.join(self.templatePath, self.innerPath, self.itemName),
+                directory=os.path.join(self.templatePath, self.innerPath),
+                filename=self.cardName
+            )
+            bpy.context.view_layer.update()
+            
+            # import material too
+            with bpy.data.libraries.load(self.templatePath) as (dataFrom, dataTo):
+                dataTo.materials = dataFrom.materials
+            # pass the current SplitFlapProperties to Geometry Nodes input where necessary
+            newObjectNames = [obj.name for obj in context.scene.objects if obj.name not in oldObjectNames and obj.name.startswith(self.itemName)]
+            newCardNames = [obj.name for obj in context.scene.objects if obj.name not in oldObjectNames and obj.name.startswith(self.cardName)]
+            if len(newObjectNames) > 0 and len(newCardNames) > 0:
+                context.scene.splitFlapTemplate = newObjectNames[0]
+                context.scene.cardTemplate = newCardNames[0]
+                templateFlapItem = bpy.data.objects[context.scene.splitFlapTemplate]
+                cardTemplate = bpy.data.objects[context.scene.cardTemplate]
+                print("imported cardTemplate object name: '%s'" % newCardNames[0])
+            else:
+                self.report({'ERROR'}, "The import of the flap item template failed.")
+                return {'FINISHED'}
         
+        print("card template object is %s" % str(cardTemplate))
+        
+        sfTool = context.scene.splitFlapTool
         # generate texture
         fontPath = findFont(sfTool.fontName)
         texturePath = None
-        textureFile = "FlapCharacters.png"
+        textureFile = "FlapCharacters%d.png"
+        
         if fontPath is None:
             self.report({'ERROR'}, "The font %s could not be found." % sfTool.fontName)
             return {'FINISHED'}
         
         # generate texture
+        textureIndex = 0
+        while os.path.exists(os.path.join(bpy.path.abspath("//"), textureFile % textureIndex)):
+            textureIndex += 1
+        textureFile = textureFile % textureIndex
         texturePath = os.path.join(bpy.path.abspath("//"), textureFile)
         fontColor = [min(255, int(255*round(value))) for value in [sfTool.fontColor.r, sfTool.fontColor.g, sfTool.fontColor.b]]
         fontColor.append(255)
         backgroundColor = [min(255, int(255*round(value))) for value in [sfTool.backgroundColor.r, sfTool.backgroundColor.g, sfTool.backgroundColor.b]]
         backgroundColor.append(255)
+        charsPerRow = math.ceil(math.sqrt(len(sfTool.characters)))
         createCharactersTexture(characters=sfTool.characters, fontPath=fontPath, output=texturePath, 
                                 color=tuple(fontColor), background=tuple(backgroundColor),
-                                fontFactorWidth=sfTool.charWidth, fontFactorHeight=sfTool.charHeight)
-        
+                                fontFactorWidth=sfTool.charWidth, fontFactorHeight=sfTool.charHeight,
+                                itemsPerSide=charsPerRow)
         splitFlapItems = []
         prefix = '' if " " in sfTool.identPrefix else sfTool.identPrefix
-        for newObjectName in newObjectNames:
-            newObj = bpy.data.objects[newObjectName]
-            for modifier in newObj.modifiers:
-                if modifier.type == 'NODES' and modifier.name == "SplitFlapCircle":
-                    splitFlapItems.append(newObj)
-                    modifier["Input_3"] = sfTool.flapRadius
-                    modifier["Input_8"] = 0.
-                    # rename object according to the wanted prefix
-                    newObj.name = "%sItem0" % prefix
-                    break
-
-        # make the wanted number of copies and add them to the same collection
-        if len(splitFlapItems) == 1:
-            # update material of the template: load the image, get the material, copy and change the image
-            # find the right material
-            for slot in splitFlapItems[0].material_slots:
+        width = templateFlapItem.dimensions.x
+        height = templateFlapItem.dimensions.z
+        newCard = duplicateObject(cardTemplate)
+        newMat = None
+        oldMat = bpy.data.materials.get(self.materialName)
+        if oldMat is not None:
+            newMat = oldMat.copy()
+            newMat.node_tree.nodes["Image Texture"].image = bpy.data.images.load(texturePath)
+            for slot in newCard.material_slots:
                 if slot.material.name == self.materialName:
-                    slot.material.node_tree.nodes["Image Texture"].image = bpy.data.images.load(texturePath)
-                    break
+                    slot.material = newMat
+        newObj = duplicateObject(templateFlapItem)
+        templateFlapItem.hide_viewport = True
+        newObj.hide_viewport = False
+
+        for modifier in newObj.modifiers:
+            if modifier.type == 'NODES' and modifier.name == "SplitFlapCircle":
+                modifier["Input_3"] = sfTool.flapRadius
+                modifier["Input_4"] = sfTool.characters
+                modifier["Input_5"] = charsPerRow
+                modifier["Input_7"] = charsPerRow
+                modifier["Input_8"] = 0.
+                modifier["Input_9"] = newCard
+                modifier["Output_6_attribute_name"] = self.uvAttribute
+                # rename object according to the wanted prefix
+                newObj.name = "%sItem0" % prefix
+                # update material of the template: load the image, get the material, copy and change the image
+                # find the right material
+
+                        # slot.material = slot.material.copy()
+                        # slot.material.node_tree.nodes["Image Texture"].image = bpy.data.images.load(texturePath)
+        #unlink original
+        otherCollections = [collection.name for collection in newObj.users_collection if collection.name != collName]
+        for otherCollName in otherCollections:
+            if otherCollName == "Scene Collection":
+                bpy.context.scene.collection.objects.unlink(newObj) 
+            else:
+                bpy.data.collections[otherCollName].objects.unlink(newObj)
+        splitFlapItems.append(newObj)
+        
+        # Create the collection
+        collIndex = 0
+        while collIndex < 200:
+            if "%sSystem%d" % (sfTool.identPrefix, collIndex) not in bpy.data.collections:
+                break
+            collIndex += 1
+        collName = "%sSystem%d" % (sfTool.identPrefix, collIndex)
+        collection = bpy.data.collections.new(collName)
+        collection["SplitFlapSettings.flapTime"] = sfTool.flapTime
+        collection["SplitFlapSettings.characters"] = sfTool.characters
+        collection["SplitFlap"] = self.collectionMarker
+        bpy.context.scene.collection.children.link(collection)
+        newCard.name = "%sCard%d" % (sfTool.identPrefix, collIndex)
+        collection.objects.link(newCard)
+        
+        # make the wanted number of copies and add them to the same collection
+        # get width and height of the split flap item
+
+        splitFlapItems[0].name = "%sItem%d.%d" % (sfTool.identPrefix, collIndex, 0)
+        d = 1
+        
+        print("split flap copy object %s dimensions=%s width=%.2f horizontalGap=%.2f" % (splitFlapItems[0].name, str(splitFlapItems[0].dimensions), width, sfTool.horizontalGap))
+        
+        for v in range(0, sfTool.rowCount):
+            for h in range(0, sfTool.colCount):
+                if h == 0 and v == 0:
+                    continue
+                objCopy = duplicateObject(splitFlapItems[0])
+                objCopy.name = "%sItem%d.%d" % (sfTool.identPrefix, collIndex, d)
+                objCopy.location.x = splitFlapItems[0].location.x + h*(width + sfTool.horizontalGap)
+                objCopy.location.z = splitFlapItems[0].location.z - v*(height + sfTool.horizontalGap)
+                splitFlapItems.append(objCopy)
+                print("split flap copy h=%d v=%d x0=%.2f z0=%.2f x=%.2f z=%.2f" % (h, v, splitFlapItems[0].location.x, splitFlapItems[0].location.z, objCopy.location.x, objCopy.location.z))
+                d += 1
+
+        bounds = []
+        
+        for splitFlapItem in splitFlapItems:
+            bounds.append(splitFlapItem.bound_box)
+            collection.objects.link(splitFlapItem)
+        
+        # optionally create the frame mesh / cut out holes for the flap items
+        if sfTool.createFrame:
+            bpy.context.view_layer.update()
+            locBegin = getBoundingBoxCenter(splitFlapItems[0])
+            locEnd = getBoundingBoxCenter(splitFlapItems[-1])
+            dimensions = splitFlapItems[0].dimensions
+            add = (0.1, 0.05, 0.1)
+            factor = 0.5
+            xMin = locBegin.x - (factor + add[0]) * dimensions.x 
+            xMax = locEnd.x + (factor + add[0]) * dimensions.x
+            yMin = locBegin.y - (factor + add[1]) * dimensions.y
+            yMax = locEnd.y + (factor + add[1]) * dimensions.y
+            zMin = locEnd.z - (factor + add[2]) * dimensions.z 
+            zMax = locBegin.z + (factor + add[2]) * dimensions.z
+            print("X %.2f - %.2f\nY  %.2f - %.2f\nZ %.2f - %.2f" % (xMin, xMax, yMin, yMax, zMin, zMax))
+            frameSize = (0.5 * abs(xMax-xMin), 0.5 * abs(yMax-yMin), 0.5 * abs(zMax-zMin))
+            frameCenter = (0.5 * (xMin + xMax), 0.5 * (yMin + yMax), 0.5 * (zMin + zMax))
+            bpy.ops.mesh.primitive_cube_add(location=frameCenter, scale=frameSize)
+            frameObj = context.object
             
-            # get width and height of the split flap item
-            width = splitFlapItems[0].dimensions.x
-            height = splitFlapItems[0].dimensions.z
-            d = 1
-            for v in range(0, sfTool.rowCount):
-                for h in range(0, sfTool.colCount):
-                    if h == 0 and v == 0:
-                        continue
-                    objCopy = duplicateObject(splitFlapItems[0])
-                    objCopy.name = "%sItem%d" % (sfTool.identPrefix, d)
-                    objCopy.location.x = splitFlapItems[0].location.x + h*(width + sfTool.horizontalGap)
-                    objCopy.location.z = splitFlapItems[0].location.z - v*(height + sfTool.horizontalGap)
-                    splitFlapItems.append(objCopy)
-                    d += 1
-            
-            collIndex = 0
-            while collIndex < 100:
-                if "%sSystem%d" % (sfTool.identPrefix, collIndex) not in bpy.data.collections:
-                    break
-                collIndex += 1
-            collName = "%sSystem%d" % (sfTool.identPrefix, collIndex)
-            collection = bpy.data.collections.new(collName)
-            collection["SplitFlapSettings.flapTime"] = sfTool.flapTime
-            collection["SplitFlapSettings.characters"] = sfTool.characters
-            collection["SplitFlap"] = self.collectionMarker
-            bpy.context.scene.collection.children.link(collection)
-            bounds = []
+            # add cutters for the split flap items
+            tempSelectedObj = bpy.context.view_layer.objects.active
+            bpy.ops.object.select_all(action='DESELECT')
+            cutters = []
             for splitFlapItem in splitFlapItems:
-                bounds.append(splitFlapItem.bound_box)
-                collection.objects.link(splitFlapItem)
-                if splitFlapItem == splitFlapItems[0]: #unlink original
-                    otherCollections = [collection.name for collection in splitFlapItem.users_collection if collection.name != collName]
-                    for otherCollName in otherCollections:
-                        if otherCollName == "Scene Collection":
-                            bpy.context.scene.collection.objects.unlink(splitFlapItem) 
-                        else:
-                            bpy.data.collections[otherCollName].objects.unlink(splitFlapItem)
-                            
-            # optionally create the frame mesh / cut out holes for the flap items
-            if sfTool.createFrame:
-                bpy.context.view_layer.update()
-                locBegin = getBoundingBoxCenter(splitFlapItems[0])
-                locEnd = getBoundingBoxCenter(splitFlapItems[-1])
-                dimensions = splitFlapItems[0].dimensions
-                add = (0.1, 0.05, 0.1)
-                factor = 0.5
-                xMin = locBegin.x - (factor + add[0]) * dimensions.x 
-                xMax = locEnd.x + (factor + add[0]) * dimensions.x
-                yMin = locBegin.y - (factor + add[1]) * dimensions.y
-                yMax = locEnd.y + (factor + add[1]) * dimensions.y
-                zMin = locEnd.z - (factor + add[2]) * dimensions.z 
-                zMax = locBegin.z + (factor + add[2]) * dimensions.z
-                print("X %.2f - %.2f\nY  %.2f - %.2f\nZ %.2f - %.2f" % (xMin, xMax, yMin, yMax, zMin, zMax))
-                frameSize = (0.5 * abs(xMax-xMin), 0.5 * abs(yMax-yMin), 0.5 * abs(zMax-zMin))
-                frameCenter = (0.5 * (xMin + xMax), 0.5 * (yMin + yMax), 0.5 * (zMin + zMax))
-                bpy.ops.mesh.primitive_cube_add(location=frameCenter, scale=frameSize)
-                frameObj = context.object
-                
-                # add cutters for the split flap items
-                tempSelectedObj = bpy.context.view_layer.objects.active
-                bpy.ops.object.select_all(action='DESELECT')
-                cutters = []
-                for splitFlapItem in splitFlapItems:
-                    loc = getBoundingBoxCenter(splitFlapItem)
-                    dim = splitFlapItem.dimensions
-                    loc.y -= 0.15*dim.y
-                    scaled = (dim.x*1.03*0.5, dim.y*1.1*0.5, dim.z*1.02*0.5)
-                    bpy.ops.mesh.primitive_cube_add(location=loc, scale=scaled)
-                    cutterObj = context.object
-                    cutters.append(cutterObj)
-                # join cutter objects
-                with bpy.context.temp_override(active_object=cutters[0], selected_editable_objects=cutters):
-                    bpy.ops.object.join()
-                boolObj = cutters[0]
-                boolModifier = frameObj.modifiers.new(type="BOOLEAN", name="cutFrame")
-                boolModifier.object = boolObj
-                boolModifier.operation = 'DIFFERENCE'
-                bpy.context.view_layer.objects.active = frameObj
-                bpy.ops.object.modifier_apply(modifier="cutFrame")
-                bpy.ops.object.select_all(action='DESELECT')
-                boolObj.select_set(True)
-                bpy.ops.object.delete()
-                frameObj.name = "%s_frame" % collName
-                moveToCollection(frameObj, collection)
-                # apply material
-                frameMat = bpy.data.materials.get("BlackMetal")
-                if frameMat is not None:
-                    if frameObj.data.materials:
-                        frameObj.data.materials[0] = frameMat
-                    else:
-                        frameObj.data.materials.append(frameMat)
-                
+                loc = getBoundingBoxCenter(splitFlapItem)
+                dim = splitFlapItem.dimensions
+                loc.y -= 0.15*dim.y
+                scaled = (dim.x*1.03*0.5, dim.y*1.1*0.5, dim.z*1.02*0.5)
+                bpy.ops.mesh.primitive_cube_add(location=loc, scale=scaled)
+                cutterObj = context.object
+                cutters.append(cutterObj)
+            # join cutter objects
+            with bpy.context.temp_override(active_object=cutters[0], selected_editable_objects=cutters):
+                bpy.ops.object.join()
+            boolObj = cutters[0]
+            boolModifier = frameObj.modifiers.new(type="BOOLEAN", name="cutFrame")
+            boolModifier.object = boolObj
+            boolModifier.operation = 'DIFFERENCE'
+            bpy.context.view_layer.objects.active = frameObj
+            bpy.ops.object.modifier_apply(modifier="cutFrame")
+            bpy.ops.object.select_all(action='DESELECT')
+            boolObj.select_set(True)
+            bpy.ops.object.delete()
+            frameObj.name = "%s_frame" % collName
+            moveToCollection(frameObj, collection)
+            # apply material
+            frameMat = bpy.data.materials.get("BlackMetal")
+            if frameMat is not None:
+                if frameObj.data.materials:
+                    frameObj.data.materials[0] = frameMat
+                else:
+                    frameObj.data.materials.append(frameMat)
+            
         return {'FINISHED'}
 
 

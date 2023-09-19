@@ -6,7 +6,8 @@
 
 import bpy.utils
 
-from .control import SplitFlapSettings, SplitFlapKeySettings, SplitFlapPanel, SplitFlapAnimationPanel, SplitFlapApplyFrames, SplitFlapAnimationListItem, SplitFlapAnimationList, SplitFlapController, SplitFlapAnimationController
+from .structures import SplitFlapSettings, SplitFlapKeySettings
+from .control import SplitFlapPanel, SplitFlapAnimationPanel, SplitFlapApplyFrames, SplitFlapAnimationListItem, SplitFlapAnimationList, SplitFlapController, SplitFlapAnimationController
 
 bl_info = {
     "name": "Split Flap Table Generator",
@@ -35,12 +36,16 @@ def register():
         print("register %s" % str(cls))
         bpy.utils.register_class(cls)
     bpy.types.Collection.splitFlapSettings = SplitFlapSettings
+    bpy.types.Scene.splitFlapTemplate = bpy.props.StringProperty(name = "ID of the last loaded template flap item", default="")
+    bpy.types.Scene.cardTemplate = bpy.props.StringProperty(name = "ID of the last loaded card item", default="")
     bpy.types.Scene.splitFlapTool = bpy.props.PointerProperty(type=SplitFlapSettings)
     bpy.types.Scene.splitFlapKeySetting = bpy.props.PointerProperty(type=SplitFlapKeySettings)
     bpy.types.Scene.splitFlapAnimations = bpy.props.PointerProperty(type=SplitFlapAnimationList)
     bpy.types.Scene.splitFlapAnimationIndex = bpy.props.IntProperty(name = "Index for SplitFlapAnimationList", default = -1, update=control.flapAnimation_updateDisplay)
 
 def unregister():
+    del bpy.types.Scene.splitFlapTemplate
+    del bpy.types.Scene.cardTemplate
     del bpy.types.Scene.splitFlapTool
     del bpy.types.Scene.splitFlapKeySetting
     del bpy.types.Scene.splitFlapAnimations
