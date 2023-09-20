@@ -4,6 +4,7 @@
 # This source code is licensed under the MIT-style license found in the
 # LICENSE file in the same directory of this source tree.
 import bpy
+from .texture import getFonts
 
 def flapSettings_getFonts(scene, context):
     items = []

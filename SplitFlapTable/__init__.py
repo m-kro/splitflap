@@ -41,7 +41,7 @@ def register():
     bpy.types.Scene.splitFlapTool = bpy.props.PointerProperty(type=SplitFlapSettings)
     bpy.types.Scene.splitFlapKeySetting = bpy.props.PointerProperty(type=SplitFlapKeySettings)
     bpy.types.Scene.splitFlapAnimations = bpy.props.PointerProperty(type=SplitFlapAnimationList)
-    bpy.types.Scene.splitFlapAnimationIndex = bpy.props.IntProperty(name = "Index for SplitFlapAnimationList", default = -1, update=control.flapAnimation_updateDisplay)
+    bpy.types.Scene.splitFlapAnimationIndex = bpy.props.IntProperty(name = "Index for SplitFlapAnimationList", default = -1, update=structures.flapAnimation_updateDisplay)
 
 def unregister():
     del bpy.types.Scene.splitFlapTemplate

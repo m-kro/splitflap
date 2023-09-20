@@ -10,7 +10,7 @@ import math
 import addon_utils
 from mathutils import Vector
 
-from .texture import createCharactersTexture, findFont, getFonts
+from .texture import createCharactersTexture, findFont
 from .structures import SplitFlapKeySettings, SplitFlapSettings
 
 class SplitFlapPanel(bpy.types.Panel):
@@ -391,16 +391,10 @@ class SplitFlapController(bpy.types.Operator):
         templateFlapItem = None if len(context.scene.splitFlapTemplate ) == 0 else bpy.data.objects[context.scene.splitFlapTemplate]
         cardTemplate = None if len(context.scene.cardTemplate) == 0 else bpy.data.objects[context.scene.cardTemplate]
         if templateFlapItem is None or cardTemplate is None:
-            #absFilePath = bpy.path.abspath(self.templatePath)
             bpy.ops.wm.append(
                 filepath=os.path.join(self.templatePath, self.innerPath, self.itemName),
                 directory=os.path.join(self.templatePath, self.innerPath),
                 filename=self.itemName
-            )
-            bpy.ops.wm.append(
-                filepath=os.path.join(self.templatePath, self.innerPath, self.itemName),
-                directory=os.path.join(self.templatePath, self.innerPath),
-                filename=self.cardName
             )
             bpy.context.view_layer.update()
             
@@ -410,6 +404,7 @@ class SplitFlapController(bpy.types.Operator):
             # pass the current SplitFlapProperties to Geometry Nodes input where necessary
             newObjectNames = [obj.name for obj in context.scene.objects if obj.name not in oldObjectNames and obj.name.startswith(self.itemName)]
             newCardNames = [obj.name for obj in context.scene.objects if obj.name not in oldObjectNames and obj.name.startswith(self.cardName)]
+            
             if len(newObjectNames) > 0 and len(newCardNames) > 0:
                 context.scene.splitFlapTemplate = newObjectNames[0]
                 context.scene.cardTemplate = newCardNames[0]
@@ -452,6 +447,8 @@ class SplitFlapController(bpy.types.Operator):
         width = templateFlapItem.dimensions.x
         height = templateFlapItem.dimensions.z
         newCard = duplicateObject(cardTemplate)
+        cardTemplate.hide_viewport = True
+        newCard.hide_viewport = False
         newMat = None
         oldMat = bpy.data.materials.get(self.materialName)
         if oldMat is not None:
@@ -475,11 +472,7 @@ class SplitFlapController(bpy.types.Operator):
                 modifier["Output_6_attribute_name"] = self.uvAttribute
                 # rename object according to the wanted prefix
                 newObj.name = "%sItem0" % prefix
-                # update material of the template: load the image, get the material, copy and change the image
-                # find the right material
 
-                        # slot.material = slot.material.copy()
-                        # slot.material.node_tree.nodes["Image Texture"].image = bpy.data.images.load(texturePath)
         #unlink original
         otherCollections = [collection.name for collection in newObj.users_collection if collection.name != collName]
         for otherCollName in otherCollections:
@@ -506,10 +499,8 @@ class SplitFlapController(bpy.types.Operator):
         
         # make the wanted number of copies and add them to the same collection
         # get width and height of the split flap item
-
         splitFlapItems[0].name = "%sItem%d.%d" % (sfTool.identPrefix, collIndex, 0)
         d = 1
-        
         print("split flap copy object %s dimensions=%s width=%.2f horizontalGap=%.2f" % (splitFlapItems[0].name, str(splitFlapItems[0].dimensions), width, sfTool.horizontalGap))
         
         for v in range(0, sfTool.rowCount):
@@ -523,9 +514,8 @@ class SplitFlapController(bpy.types.Operator):
                 splitFlapItems.append(objCopy)
                 print("split flap copy h=%d v=%d x0=%.2f z0=%.2f x=%.2f z=%.2f" % (h, v, splitFlapItems[0].location.x, splitFlapItems[0].location.z, objCopy.location.x, objCopy.location.z))
                 d += 1
-
-        bounds = []
         
+        bounds = []
         for splitFlapItem in splitFlapItems:
             bounds.append(splitFlapItem.bound_box)
             collection.objects.link(splitFlapItem)
