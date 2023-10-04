@@ -42,6 +42,7 @@ class SplitFlapPanel(bpy.types.Panel):
         row = layout.row()
         row.prop(sfTool, "charWidth")
         row.prop(sfTool, "charHeight")
+        row.prop(sfTool, "flapRatio")
         row = layout.row()
         if isWin:
             row.prop(sfTool, "fontChoice")
@@ -448,7 +449,6 @@ class SplitFlapController(bpy.types.Operator):
         height = templateFlapItem.dimensions.z
         newCard = duplicateObject(cardTemplate)
         cardTemplate.hide_viewport = True
-        newCard.hide_viewport = False
         newMat = None
         oldMat = bpy.data.materials.get(self.materialName)
         if oldMat is not None:
@@ -457,6 +457,7 @@ class SplitFlapController(bpy.types.Operator):
             for slot in newCard.material_slots:
                 if slot.material.name == self.materialName:
                     slot.material = newMat
+        
         newObj = duplicateObject(templateFlapItem)
         templateFlapItem.hide_viewport = True
         newObj.hide_viewport = False
@@ -496,6 +497,12 @@ class SplitFlapController(bpy.types.Operator):
         bpy.context.scene.collection.children.link(collection)
         newCard.name = "%sCard%d" % (sfTool.identPrefix, collIndex)
         collection.objects.link(newCard)
+        
+        # optionally scale the flap item, maintain the current width
+        #oldRatio = newCard.dimensions[0]*newCard.scale.x/(2*newCard.dimensions[2]*newCard.scale.z) # X / Z
+        newCard.scale.z = newCard.dimensions[0]*newCard.scale.x/(2*newCard.dimensions[2]*sfTool.flapRatio)
+        applyTransforms(context, [newCard], location=False, rotation=False, scale=True)
+        newCard.hide_viewport = True
         
         # make the wanted number of copies and add them to the same collection
         # get width and height of the split flap item
@@ -599,3 +606,11 @@ def duplicateObject(obj, data=True, actions=True, collection=None):
     if collection is not None:
         collection.objects.link(objCopy)
     return objCopy
+    
+def applyTransforms(context, objList, location=True, rotation=True, scale=True):
+    bpy.ops.object.select_all(action='DESELECT')
+    for obj in objList:
+        obj.select_set(True)
+    bpy.ops.object.transform_apply(location=location, rotation=rotation, scale=scale)
+    for obj in objList:
+        obj.select_set(False)

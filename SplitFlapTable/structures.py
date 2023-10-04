@@ -92,6 +92,13 @@ class SplitFlapSettings(bpy.types.PropertyGroup):
         min = 0.3,
         max = 1.5
     )
+    flapRatio : bpy.props.FloatProperty(
+        name = "Flap item width/height ratio",
+        description = "Ratio of the width of the flap item divided by twice the height (upper and lower characters parts counted as one)",
+        default = 0.5,
+        min = 0.2,
+        max = 1.5
+    )
     fontName : bpy.props.StringProperty(
         name="Font",
         description="Font to use for the characters",

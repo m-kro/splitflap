@@ -23,10 +23,16 @@ def createCharactersTexture(charSpace=(125,200), characters="ABCDEFGHIJKLMNOPQRS
     increment = 2
     maxIt = 100
     i = 0
-    font = None 
+    font = None
+    
+    # get the widest character
+    font = ImageFont.truetype(fontPath, charSize)
+    charWidths = [(font.getmask(character).getbbox())[2] for character in characters if character != ' ']
+    widestChar = characters[charWidths.index(max(charWidths))]
+    
     while i < maxIt:
         font = ImageFont.truetype(fontPath, charSize)
-        bbox = font.getmask("0").getbbox()
+        bbox = font.getmask(widestChar).getbbox()
         currentSize = (bbox[2], bbox[3])
         error = [abs((currentSize[i]-targetSize[i])/targetSize[i]) for i in range(2)]
         # ending criterion 
