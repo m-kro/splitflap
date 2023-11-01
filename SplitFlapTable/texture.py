@@ -27,9 +27,9 @@ def createCharactersTexture(charSpace=(125,200), characters="ABCDEFGHIJKLMNOPQRS
     # get the widest character
     font = ImageFont.truetype(fontPath, charSize)
     charWidths = [(font.getmask(character).getbbox())[2] - (font.getmask(character).getbbox())[0] if character != ' ' else 0 for character in characters]
-    print("%s" % "\n".join(["%s: %d" % (characters[i], charWidths[i]) for i in range(len(charWidths))]))
+    #print("%s" % "\n".join(["%s: %d" % (characters[i], charWidths[i]) for i in range(len(charWidths))]))
     widestChar = characters[charWidths.index(max(charWidths))]
-    print("Widest char: %s" % widestChar)
+    #print("Widest char: %s" % widestChar)
     
     while i < maxIt:
         font = ImageFont.truetype(fontPath, charSize)
@@ -37,7 +37,7 @@ def createCharactersTexture(charSpace=(125,200), characters="ABCDEFGHIJKLMNOPQRS
         currentSize = (bbox[2], bbox[3])
         # ending criterion 
         if currentSize[0]-targetSize[0]>=0 or currentSize[1]-targetSize[1]>=0:
-            print("Stop char heuristic: %s target size %s actual size %s" % (widestChar, str(targetSize), str(currentSize)))
+            #print("Stop char heuristic: %s target size %s actual size %s" % (widestChar, str(targetSize), str(currentSize)))
             break
         charSize += increment
         i += 1
