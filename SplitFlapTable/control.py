@@ -70,11 +70,15 @@ class SplitFlapAnimationPanel(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         sfKeySetting = context.scene.splitFlapKeySetting
+        textStatus = context.scene.textStatusMessage
         row = layout.row()
         row.template_list("OBJECT_UL_SplitFlapAnimationListItem", "", bpy.context.scene.splitFlapAnimations, "items", 
                             bpy.context.scene, "splitFlapAnimationIndex", rows=2, maxrows=5, type='DEFAULT')
         row = layout.row()
         row.prop(sfKeySetting, "text")
+        if len(textStatus) > 0:
+            row = layout.row()
+            layout.label(text=textStatus)
         row = layout.row()
         row.prop(sfKeySetting, "keyTime")
         row = layout.row()
@@ -493,6 +497,8 @@ class SplitFlapController(bpy.types.Operator):
         collection = bpy.data.collections.new(collName)
         collection["SplitFlapSettings.flapTime"] = sfTool.flapTime
         collection["SplitFlapSettings.characters"] = sfTool.characters
+        collection["SplitFlapSettings.rowCount"] = sfTool.rowCount
+        collection["SplitFlapSettings.colCount"] = sfTool.colCount
         collection["SplitFlap"] = self.collectionMarker
         bpy.context.scene.collection.children.link(collection)
         newCard.name = "%sCard%d" % (sfTool.identPrefix, collIndex)

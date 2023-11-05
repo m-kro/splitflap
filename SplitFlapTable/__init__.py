@@ -38,6 +38,7 @@ def register():
     bpy.types.Collection.splitFlapSettings = SplitFlapSettings
     bpy.types.Scene.splitFlapTemplate = bpy.props.StringProperty(name = "ID of the last loaded template flap item", default="")
     bpy.types.Scene.cardTemplate = bpy.props.StringProperty(name = "ID of the last loaded card item", default="")
+    bpy.types.Scene.textStatusMessage = bpy.props.StringProperty(name = "Storage for text status message", default="")
     bpy.types.Scene.splitFlapTool = bpy.props.PointerProperty(type=SplitFlapSettings)
     bpy.types.Scene.splitFlapKeySetting = bpy.props.PointerProperty(type=SplitFlapKeySettings)
     bpy.types.Scene.splitFlapAnimations = bpy.props.PointerProperty(type=SplitFlapAnimationList)
@@ -46,6 +47,7 @@ def register():
 def unregister():
     del bpy.types.Scene.splitFlapTemplate
     del bpy.types.Scene.cardTemplate
+    del bpy.types.Scene.textStatusMessage
     del bpy.types.Scene.splitFlapTool
     del bpy.types.Scene.splitFlapKeySetting
     del bpy.types.Scene.splitFlapAnimations

@@ -29,6 +29,23 @@ def keySettings_poll(self, object):
 def keySettings_update(self, context):
     self.collectionID = self.collection.name
 
+def flapKeySettings_evalText(self, context):
+    textLen = len(self.text)
+    if self.collection is not None:
+        colCount = self.collection["SplitFlapSettings.colCount"]
+        rowCount = self.collection["SplitFlapSettings.rowCount"]
+        maxLen = colCount * rowCount
+        if textLen == maxLen:
+            context.scene.textStatusMessage = "Complete"
+        elif textLen > maxLen:
+            context.scene.textStatusMessage = "Overflow"
+        else:
+            row = textLen / colCount
+            col = textLen % colCount
+            context.scene.textStatusMessage = "Row %d col %d" % (row + 1, col)
+    else:
+        context.scene.textStatusMessage = "%d chars" % textLen
+
 class SplitFlapSettings(bpy.types.PropertyGroup):
     rowCount : bpy.props.IntProperty(
         name = "Row count",
@@ -142,6 +159,8 @@ class SplitFlapKeySettings(bpy.types.PropertyGroup):
         description="Original text input by the user",
         default="",
         maxlen=1024,
+        update=flapKeySettings_evalText,
+        options={'TEXTEDIT_UPDATE'}
     )
     formattedText : bpy.props.StringProperty(
         name="Text to display",
