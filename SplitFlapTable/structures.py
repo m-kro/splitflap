@@ -144,7 +144,7 @@ class SplitFlapSettings(bpy.types.PropertyGroup):
         name="Background color",
         subtype = "COLOR",
         description="Base color of the split flap items",
-        default=(1.0,0.0,0.0)
+        default=(0.0,0.0,1.0)
     )
     createFrame : bpy.props.BoolProperty(
         name = "Create frame",
