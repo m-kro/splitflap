@@ -419,8 +419,7 @@ class SplitFlapController(bpy.types.Operator):
             else:
                 self.report({'ERROR'}, "The import of the flap item template failed.")
                 return {'FINISHED'}
-        
-        print("card template object is %s" % str(cardTemplate))
+        # print("card template object is %s" % str(cardTemplate))
         
         sfTool = context.scene.splitFlapTool
         # generate texture
