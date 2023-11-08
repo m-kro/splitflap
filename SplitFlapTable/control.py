@@ -189,6 +189,10 @@ class SplitFlapAnimationController(bpy.types.Operator):
                 newTextList.append(char.lower())
             elif char.upper() in characters:
                 newTextList.append(char.upper())
+            elif char in ("\n", "\r"):
+                continue
+            elif ' ' in characters:
+                newTextList.append(' ')
         return "".join(newTextList)
     
     def feasibleTime(self, context, deltaIndex = -1):
@@ -448,8 +452,6 @@ class SplitFlapController(bpy.types.Operator):
                                 itemsPerSide=charsPerRow)
         splitFlapItems = []
         prefix = '' if " " in sfTool.identPrefix else sfTool.identPrefix
-        width = templateFlapItem.dimensions.x
-        height = templateFlapItem.dimensions.z
         newCard = duplicateObject(cardTemplate)
         cardTemplate.hide_viewport = True
         newMat = None
@@ -460,7 +462,6 @@ class SplitFlapController(bpy.types.Operator):
             for slot in newCard.material_slots:
                 if slot.material.name == self.materialName:
                     slot.material = newMat
-        
         newObj = duplicateObject(templateFlapItem)
         templateFlapItem.hide_viewport = True
         newObj.hide_viewport = False
@@ -476,7 +477,6 @@ class SplitFlapController(bpy.types.Operator):
                 modifier["Output_6_attribute_name"] = self.uvAttribute
                 # rename object according to the wanted prefix
                 newObj.name = "%sItem0" % prefix
-
         #unlink original
         otherCollections = [collection.name for collection in newObj.users_collection if collection.name != collName]
         for otherCollName in otherCollections:
@@ -513,22 +513,29 @@ class SplitFlapController(bpy.types.Operator):
         # get width and height of the split flap item
         splitFlapItems[0].name = "%sItem%d.%d" % (sfTool.identPrefix, collIndex, 0)
         d = 1
-        print("split flap copy object %s dimensions=%s width=%.2f horizontalGap=%.2f" % (splitFlapItems[0].name, str(splitFlapItems[0].dimensions), width, sfTool.horizontalGap))
+        collection.objects.link(splitFlapItems[0])
+        bpy.context.view_layer.update()
+        width = splitFlapItems[0].dimensions.x
+        height = splitFlapItems[0].dimensions.z
+        #print("split flap copy object %s dimensions=%s width=%.2f horizontalGap=%.2f" % (splitFlapItems[0].name, str(splitFlapItems[0].dimensions), width, sfTool.horizontalGap))
+        bounds = []
+        bounds.append(splitFlapItems[0].bound_box)
         
         for v in range(0, sfTool.rowCount):
             for h in range(0, sfTool.colCount):
                 if h == 0 and v == 0:
+                    
                     continue
                 objCopy = duplicateObject(splitFlapItems[0])
                 objCopy.name = "%sItem%d.%d" % (sfTool.identPrefix, collIndex, d)
                 objCopy.location.x = splitFlapItems[0].location.x + h*(width + sfTool.horizontalGap)
-                objCopy.location.z = splitFlapItems[0].location.z - v*(height + sfTool.horizontalGap)
+                objCopy.location.z = splitFlapItems[0].location.z - v*(height + sfTool.verticalGap)
                 splitFlapItems.append(objCopy)
-                print("split flap copy h=%d v=%d x0=%.2f z0=%.2f x=%.2f z=%.2f" % (h, v, splitFlapItems[0].location.x, splitFlapItems[0].location.z, objCopy.location.x, objCopy.location.z))
+                print("split flap copy h=%d v=%d x0=%.2f z0=%.2f x=%.2f z=%.2f height=%.2f" % (h, v, splitFlapItems[0].location.x, splitFlapItems[0].location.z, objCopy.location.x, objCopy.location.z, height))
                 d += 1
         
-        bounds = []
-        for splitFlapItem in splitFlapItems:
+
+        for splitFlapItem in splitFlapItems[1:]:
             bounds.append(splitFlapItem.bound_box)
             collection.objects.link(splitFlapItem)
         
@@ -591,8 +598,6 @@ class SplitFlapController(bpy.types.Operator):
 
 def getBoundingBoxCenter(obj):
     localCenter = 0.125 * sum((Vector(b) for b in obj.bound_box), Vector())
-    #print("\t\tlocalCenter %s" % localCenter)
-    #print("\t\tMatrix world %s" % (obj.matrix_world))
     return obj.matrix_world @ localCenter
 
 def moveToCollection(obj, collection, exclusive=True):
