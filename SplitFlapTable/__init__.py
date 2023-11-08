@@ -18,7 +18,7 @@ bl_info = {
     "location": "View3D",
     "warning": "",
     "wiki_url": "",
-    "tracker_url": "",
+    "tracker_url": "https://github.com/m-kro/splitflap/issues",
     "category": "3D View"
 }
 
