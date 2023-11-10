@@ -24,7 +24,7 @@ def flapAnimation_updateDisplay(self, context):
     self.splitFlapKeySetting.keyTime = item.keyTime
 
 def keySettings_poll(self, object):
-    return object["SplitFlap"] is not None
+    return "SplitFlap" in object
 
 def keySettings_update(self, context):
     self.collectionID = self.collection.name

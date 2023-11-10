@@ -337,6 +337,9 @@ class SplitFlapApplyFrames(bpy.types.Operator):
                 frameDurations = []
                 
                 for obj in coll.all_objects:
+                    if not "SplitFlapItem" in obj:
+                        print("skip obj %s" % obj.name)
+                        continue
                     if lastString[i] == targetString[i]:
                         print("Skip remaining character '%s' at index %d" % (lastString[i], i))
                         i += 1
@@ -484,6 +487,7 @@ class SplitFlapController(bpy.types.Operator):
                 bpy.context.scene.collection.objects.unlink(newObj) 
             else:
                 bpy.data.collections[otherCollName].objects.unlink(newObj)
+        newObj["SplitFlapItem"] = True
         splitFlapItems.append(newObj)
         
         # Create the collection
