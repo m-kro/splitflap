@@ -384,6 +384,7 @@ class SplitFlapController(bpy.types.Operator):
     materialName = "Mat.Flapcard"
     collectionMarker = "SplitFlap"
     uvAttribute = "MyUVMap"
+    charSpace = (120,200)
     
     def execute(self, context):
         # find directory to save the font to
@@ -449,10 +450,10 @@ class SplitFlapController(bpy.types.Operator):
         backgroundColor = [min(255, int(255*round(value))) for value in [sfTool.backgroundColor.r, sfTool.backgroundColor.g, sfTool.backgroundColor.b]]
         backgroundColor.append(255)
         charsPerRow = math.ceil(math.sqrt(len(sfTool.characters)))
-        createCharactersTexture(characters=sfTool.characters, fontPath=fontPath, output=texturePath, 
-                                color=tuple(fontColor), background=tuple(backgroundColor),
-                                fontFactorWidth=sfTool.charWidth, fontFactorHeight=sfTool.charHeight,
-                                itemsPerSide=charsPerRow)
+        defaultTextureRatio = self.charSpace[0] / self.charSpace[1]
+        createCharactersTexture(charSpace=(self.charSpace[0], int(self.charSpace[1] * defaultTextureRatio / sfTool.flapRatio)), characters=sfTool.characters, 
+                                fontPath=fontPath, output=texturePath, color=tuple(fontColor), background=tuple(backgroundColor),
+                                fontFactorWidth=sfTool.charWidth, fontFactorHeight=sfTool.charHeight, itemsPerSide=charsPerRow)
         splitFlapItems = []
         prefix = '' if " " in sfTool.identPrefix else sfTool.identPrefix
         newCard = duplicateObject(cardTemplate)
@@ -521,7 +522,6 @@ class SplitFlapController(bpy.types.Operator):
         bpy.context.view_layer.update()
         width = splitFlapItems[0].dimensions.x
         height = splitFlapItems[0].dimensions.z
-        #print("split flap copy object %s dimensions=%s width=%.2f horizontalGap=%.2f" % (splitFlapItems[0].name, str(splitFlapItems[0].dimensions), width, sfTool.horizontalGap))
         bounds = []
         bounds.append(splitFlapItems[0].bound_box)
         
@@ -538,7 +538,6 @@ class SplitFlapController(bpy.types.Operator):
                 print("split flap copy h=%d v=%d x0=%.2f z0=%.2f x=%.2f z=%.2f height=%.2f" % (h, v, splitFlapItems[0].location.x, splitFlapItems[0].location.z, objCopy.location.x, objCopy.location.z, height))
                 d += 1
         
-
         for splitFlapItem in splitFlapItems[1:]:
             bounds.append(splitFlapItem.bound_box)
             collection.objects.link(splitFlapItem)
