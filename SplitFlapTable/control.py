@@ -317,6 +317,10 @@ class SplitFlapApplyFrames(bpy.types.Operator):
                             singleChars[j] = singleChars[j].upper()
                         elif singleChars[j].isupper() and singleChars[j].lower() in characters:
                             singleChars[j] = singleChars[j].lower()
+                        else:
+                            self.report({'INFO'}, "The character '%s' is not part of the given ones and will be replaced by '%s'." % (singleChars[j], characters[spaceIdx]))
+                            singleChars[j] = characters[spaceIdx]
+                            
                 frameSetting.text = "".join(singleChars)
                 i = 0
                 if frameSetting.extend:
@@ -457,7 +461,9 @@ class SplitFlapController(bpy.types.Operator):
         splitFlapItems = []
         prefix = '' if " " in sfTool.identPrefix else sfTool.identPrefix
         newCard = duplicateObject(cardTemplate)
+        newCard.hide_render = True
         cardTemplate.hide_viewport = True
+        cardTemplate.hide_render = True
         newMat = None
         oldMat = bpy.data.materials.get(self.materialName)
         if oldMat is not None:
@@ -468,7 +474,9 @@ class SplitFlapController(bpy.types.Operator):
                     slot.material = newMat
         newObj = duplicateObject(templateFlapItem)
         templateFlapItem.hide_viewport = True
+        templateFlapItem.hide_render = True
         newObj.hide_viewport = False
+        newObj.hide_render = False
 
         for modifier in newObj.modifiers:
             if modifier.type == 'NODES' and modifier.name == "SplitFlapCircle":
