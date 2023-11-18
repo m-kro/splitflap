@@ -3,5 +3,8 @@
 *.bat
 .project
 .pydevproject
+*.xlsx
+*.blend1
+*.mkv
 
 FlapCharacters.png
