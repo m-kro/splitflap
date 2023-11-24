@@ -338,8 +338,6 @@ class SplitFlapApplyFrames(bpy.types.Operator):
                 startFrame = int(round(fps * frameSetting.keyTime))
                 print("lastString '%s' targetString '%s'" % (lastString, targetString))
                 
-                frameDurations = []
-                
                 for obj in coll.all_objects:
                     if not "SplitFlapItem" in obj:
                         print("skip obj %s" % obj.name)
@@ -368,8 +366,6 @@ class SplitFlapApplyFrames(bpy.types.Operator):
                             lastString = lastString[:i] + targetString[i] + lastString[i + 1:]
                             break
                     i += 1
-                    frameDurations.append(flapFrames)
-                maxDur = max(frameDurations)
         context.scene.frame_set(frameBefore) # set frame back to begin
         return {'FINISHED'}
 
