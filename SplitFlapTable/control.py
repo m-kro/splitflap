@@ -382,6 +382,7 @@ class SplitFlapController(bpy.types.Operator):
     cardName = "CardExample"
     itemName = "SplitFlapItem"
     materialName = "Mat.Flapcard"
+    frameMaterialName = "BlackMetal"
     collectionMarker = "SplitFlap"
     uvAttribute = "MyUVMap"
     charSpace = (120,200)
@@ -401,9 +402,13 @@ class SplitFlapController(bpy.types.Operator):
             self.report({'INFO'}, "Cannot find the template blend file %." % self.templateFile)
             return
         oldObjectNames = [obj.name for obj in context.scene.objects]
-        templateFlapItem = None if len(context.scene.splitFlapTemplate ) == 0 else bpy.data.objects[context.scene.splitFlapTemplate]
-        cardTemplate = None if len(context.scene.cardTemplate) == 0 else bpy.data.objects[context.scene.cardTemplate]
+        templateFlapItem = None if len(context.scene.splitFlapTemplate) == 0 or context.scene.splitFlapTemplate not in bpy.data.objects else bpy.data.objects[context.scene.splitFlapTemplate]
+        cardTemplate = None if len(context.scene.cardTemplate) == 0 or context.scene.cardTemplate not in bpy.data.objects else bpy.data.objects[context.scene.cardTemplate]
         if templateFlapItem is None or cardTemplate is None:
+            for material in bpy.data.materials: # search for orphan material data which disturbs the fresh import
+                if (material.name.startswith(self.materialName) or material.name.startswith(self.frameMaterialName)) and not material.users:
+                    print("Remove unused material %s" % material.name)
+                    bpy.data.materials.remove(material)
             bpy.ops.wm.append(
                 filepath=os.path.join(self.templatePath, self.innerPath, self.itemName),
                 directory=os.path.join(self.templatePath, self.innerPath),
