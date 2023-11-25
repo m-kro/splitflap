@@ -599,9 +599,17 @@ class SplitFlapController(bpy.types.Operator):
                     frameObj.data.materials[0] = frameMat
                 else:
                     frameObj.data.materials.append(frameMat)
-            
+            parent(context, splitFlapItems, frameObj)
         return {'FINISHED'}
 
+def parent(context, childrenList, parentObj):
+    if len(bpy.context.selected_objects) > 0:
+        bpy.ops.object.select_all(action="DESELECT")
+    for child in childrenList:
+        child.select_set(True)
+    parentObj.select_set(True)
+    bpy.ops.object.parent_set(type='OBJECT', keep_transform=True)
+    bpy.ops.object.select_all(action="DESELECT")
 
 def getBoundingBoxCenter(obj):
     localCenter = 0.125 * sum((Vector(b) for b in obj.bound_box), Vector())
