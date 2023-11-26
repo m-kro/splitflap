@@ -75,7 +75,11 @@ class SplitFlapAnimationPanel(bpy.types.Panel):
         row.template_list("OBJECT_UL_SplitFlapAnimationListItem", "", bpy.context.scene.splitFlapAnimations, "items", 
                             bpy.context.scene, "splitFlapAnimationIndex", rows=2, maxrows=5, type='DEFAULT')
         row = layout.row()
-        row.prop(sfKeySetting, "text")
+        row.prop(sfKeySetting, "useTextInput")
+        if sfKeySetting.useTextInput:
+            row.prop(sfKeySetting, "text")
+        else:
+            row.prop(sfKeySetting, "textBlock", expand=True)
         if len(textStatus) > 0:
             row = layout.row()
             layout.label(text=textStatus)
@@ -134,10 +138,10 @@ class SplitFlapAnimationController(bpy.types.Operator):
         if self.action == "ADD" or self.action == "UPDATE":
             # convert the string according to the available characters
             characters = bpy.data.collections[sfKeySetting.collectionID]["SplitFlapSettings.characters"]
-            newText = self.formatText(sfKeySetting.text, characters)
-            if len(newText) != len(sfKeySetting.text):
-                self.report({'INFO'}, "The text %s cannot be added as some character is not present in the set %s." % (sfKeySetting.text, characters))
-                return {'FINISHED'}
+            newText = self.formatText(sfKeySetting.text, context)
+            # if len(newText) != len(sfKeySetting.text):
+                # self.report({'INFO'}, "The text %s cannot be added as some character is not present in the set %s." % (sfKeySetting.text, characters))
+                # return {'FINISHED'}
             sfKeySetting.formattedText = newText
 
             timeDiffPrev = self.feasibleTime(context, deltaIndex = -1)
@@ -179,7 +183,26 @@ class SplitFlapAnimationController(bpy.types.Operator):
                 sfAnimations.items.remove(index)
         return {'FINISHED'}
     
-    def formatText(self, text, characters):
+    def formatText(self, text, context):
+        sfKeySetting = context.scene.splitFlapKeySetting
+        colCount = sfKeySetting.collection["SplitFlapSettings.colCount"]
+        characters = sfKeySetting.collection["SplitFlapSettings.characters"]
+        text = text.replace("\r", "")
+        if "\n" in text:
+            print("newline in text")
+            if colCount is None or ' ' not in characters:
+                text = text.replace("\n", "")
+            elif colCount is not None: # fill incomplete lines with space characters
+                print("Fill with space characters")
+                idx = 0
+                while idx < len(text):
+                    nextNewLine = text.find("\n")
+                    if nextNewLine < 0:
+                        break
+                    diffToFullRow = colCount - nextNewLine % colCount
+                    text = text.replace("\n", ' ' * diffToFullRow, 1)
+                    print("Inserted %d space characters to fill the line" % diffToFullRow)
+                    idx = nextNewLine + diffToFullRow
         print("format '%s'" % text)
         newTextList = []
         for char in text:
@@ -193,6 +216,7 @@ class SplitFlapAnimationController(bpy.types.Operator):
                 continue
             elif ' ' in characters:
                 newTextList.append(' ')
+        print("formatted string: %s" % ("".join(newTextList)))
         return "".join(newTextList)
     
     def feasibleTime(self, context, deltaIndex = -1):
@@ -210,7 +234,7 @@ class SplitFlapAnimationController(bpy.types.Operator):
         size = len(sfAnimations.items)
         for i in range(size):
             if len(sfAnimations.items[i].formattedText) == 0:
-                sfAnimations.items[i].formattedText = self.formatText(sfAnimations.items[i].text, characters)
+                sfAnimations.items[i].formattedText = self.formatText(sfAnimations.items[i].text, context)
         
         flapCount = len(collection.objects)
         frames = [(item.keyTime, item.formattedText, False) for item in sfAnimations.items]
@@ -310,31 +334,31 @@ class SplitFlapApplyFrames(bpy.types.Operator):
             
             for frameSetting in frameSettings:
                 # check lower/upper case and replace automatically if one of them is not present in the character set
-                singleChars = [c for c in frameSetting.text]
-                for j in range(0, len(singleChars)):
-                    if singleChars[j] not in characters:
-                        if singleChars[j].islower() and singleChars[j].upper() in characters:
-                            singleChars[j] = singleChars[j].upper()
-                        elif singleChars[j].isupper() and singleChars[j].lower() in characters:
-                            singleChars[j] = singleChars[j].lower()
-                        else:
-                            self.report({'INFO'}, "The character '%s' is not part of the given ones and will be replaced by '%s'." % (singleChars[j], characters[spaceIdx]))
-                            singleChars[j] = characters[spaceIdx]
+                # singleChars = [c for c in frameSetting.text]
+                # for j in range(0, len(singleChars)):
+                    # if singleChars[j] not in characters:
+                        # if singleChars[j].islower() and singleChars[j].upper() in characters:
+                            # singleChars[j] = singleChars[j].upper()
+                        # elif singleChars[j].isupper() and singleChars[j].lower() in characters:
+                            # singleChars[j] = singleChars[j].lower()
+                        # else:
+                            # self.report({'INFO'}, "The character '%s' is not part of the given ones and will be replaced by '%s'." % (singleChars[j], characters[spaceIdx]))
+                            # singleChars[j] = characters[spaceIdx]
                             
-                frameSetting.text = "".join(singleChars)
+                # frameSetting.text = "".join(singleChars)
                 i = 0
                 if frameSetting.extend:
-                    targetString = frameSetting.text[:maxLen] if len(frameSetting.text) >= maxLen else frameSetting.text + " " * (maxLen - len(frameSetting.text))
+                    targetString = frameSetting.formattedText[:maxLen] if len(frameSetting.formattedText) >= maxLen else frameSetting.formattedText + " " * (maxLen - len(frameSetting.formattedText))
                 elif frameSetting.center:
-                    textLen = len(frameSetting.text)
+                    textLen = len(frameSetting.formattedText)
                     if textLen >= maxLen:
-                        targetString = frameSetting.text[:maxLen]
+                        targetString = frameSetting.formattedText[:maxLen]
                     else:
                         indent = (maxLen - textLen)//2
                         remainder = maxLen - indent - textLen
-                        targetString = " " * indent + frameSetting.text + " " * remainder
+                        targetString = " " * indent + frameSetting.formattedText + " " * remainder
                 else:
-                    targetString = "%s%s" % (frameSetting.text[:maxLen], lastString[len(frameSetting.text):])
+                    targetString = "%s%s" % (frameSetting.formattedText[:maxLen], lastString[len(frameSetting.formattedText):])
                 startFrame = int(round(fps * frameSetting.keyTime))
                 print("lastString '%s' targetString '%s'" % (lastString, targetString))
                 

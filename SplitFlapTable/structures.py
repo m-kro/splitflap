@@ -29,6 +29,11 @@ def keySettings_poll(self, object):
 def keySettings_update(self, context):
     self.collectionID = self.collection.name
 
+def flapKeySettings_updateTextSource(self, context):
+    if not self.useTextInput:
+        if self.textBlock is not None:
+            self.text = self.textBlock.as_string()
+
 def flapKeySettings_evalText(self, context):
     textLen = len(self.text)
     if self.collection is not None:
@@ -162,6 +167,12 @@ class SplitFlapKeySettings(bpy.types.PropertyGroup):
         update=flapKeySettings_evalText,
         options={'TEXTEDIT_UPDATE'}
     )
+    textBlock : bpy.props.PointerProperty(
+        name="Chosen text block",
+        type=bpy.types.Text,
+        description="",
+        update=flapKeySettings_updateTextSource,
+    )
     formattedText : bpy.props.StringProperty(
         name="Text to display",
         description="Text to display when the split flap collection is initialised, taking into account the available characters",
@@ -174,6 +185,11 @@ class SplitFlapKeySettings(bpy.types.PropertyGroup):
         default = 5,
         min = 0,
         max = 240
+    )
+    useTextInput : bpy.props.BoolProperty(
+        name = "Use text input field",
+        description = "Take the text from the panel input field (instead of a text data block)",
+        default = True,
     )
     extend : bpy.props.BoolProperty(
         name = "Fill with space",
