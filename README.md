@@ -25,5 +25,9 @@ python -m pip install pillow
 - Then hit the button to create the animation using the flip speed defined during the split flap item creation
 Some time keys may not be allowed as the switch from one text to the next cannot be completed in the meantime.
 
+## UI
+
+![User interface](splitFlapUIDesc.png)
+
 # Compatibility
 Developed using Blender 3.4
