@@ -45,10 +45,17 @@ def createCharactersTexture(charSpace=(120,200), characters="ABCDEFGHIJKLMNOPQRS
     # type
     i = 0
     d = ImageDraw.Draw(im)
+    deprecatedSize = getattr(d, "textsize", None) is None # pillow API change in v.10
     for c in characters:
         imChar = Image.new("RGB", charSpace, color=background)
         dChar = ImageDraw.Draw(imChar)
-        textWidth, textHeight = dChar.textsize(c, font=font)
+        if deprecatedSize:
+            left, top, right, bottom = dChar.textbbox((0,0), c, font=font)
+            print("left %.0f top %.0f right %.0f bottom %.0f" % (left, top, right, bottom))
+            textWidth = right - left
+            textHeight = bottom - top
+        else:
+            textWidth, textHeight = dChar.textsize(c, font=font)
         dChar.text((0.5*charSpace[0] - 0.5*textWidth, 0.5*charSpace[1] - 0.5*textHeight), c, color, font)
         col = i % itemsPerSide
         row = int(i/itemsPerSide)
