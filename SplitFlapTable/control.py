@@ -629,6 +629,11 @@ class SplitFlapController(bpy.types.Operator):
                 else:
                     frameObj.data.materials.append(frameMat)
             parent(context, splitFlapItems, frameObj)
+            
+        # choose as default split flap items if there is no other selected
+        sfKeySetting = context.scene.splitFlapKeySetting
+        if sfKeySetting.collection is None:
+            sfKeySetting.collection = collection
         return {'FINISHED'}
 
 def parent(context, childrenList, parentObj):
