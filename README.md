@@ -64,5 +64,10 @@ concerning multi-line text.
 1. Enter the text directly in the input field of the panel added by this Blender addon: No multi-line text
 2. Use Text data blocks for multi-line text: Open the Text Editor, add a new data block by "+ New", name it, enter your text, select the data block later in UI element 19
 
+## Delete items generated through the addon
+The addon relies on some invariants, especially the IDs of template 3D objects and materials it uses to generate the final split flap items.
+As Blender resolves naming conflicts by appending suffixes, this may disturb the correct function of the addon. If you delete items created through the addon, the .blend file should be saved and reloaded to clear the Blender ID cache. Only then the templates can be imported again without seeing their IDs altered.
+
+
 # Compatibility
-Developed using Blender 3.4
+Developed using Blender 3.4. Tested with Blender 4.0.
