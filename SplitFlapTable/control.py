@@ -19,10 +19,8 @@ class SplitFlapPanel(bpy.types.Panel):
     bl_space_type = "VIEW_3D"
     bl_region_type= "UI"
     bl_category = "Split Flap"
-    # bl_parent_id = ""
     
     def draw(self, context):
-        isWin = os.name == 'nt'
         layout = self.layout
         sfTool = context.scene.splitFlapTool
         row = layout.row()
@@ -44,10 +42,7 @@ class SplitFlapPanel(bpy.types.Panel):
         row.prop(sfTool, "charHeight")
         row.prop(sfTool, "flapRatio")
         row = layout.row()
-        if isWin:
-            row.prop(sfTool, "fontChoice")
-        else:
-            row.prop(sfTool, "fontName")
+        row.prop(sfTool, "fontName")
         row = layout.row()
         row.prop(sfTool, "identPrefix")
         row = layout.row()

@@ -4,9 +4,20 @@
 # This source code is licensed under the MIT-style license found in the
 # LICENSE file in the same directory of this source tree.
 
-import os
+import os, sys
 import math
 from PIL import Image, ImageDraw, ImageFont
+
+def initFontDir():
+    result = None
+    if sys.platform.startswith("win"):
+        result = [os.path.join(os.environ['WINDIR'],'fonts')]
+    elif sys.platform.startswith("linux"): 
+        result = ["/usr/share/fonts", "/usr/local/share/fonts"]
+    elif sys.platform.startswith("darwin"):
+        result = ["/System/Library/Fonts", "/Library/Fonts"]
+    return result
+
 
 def createCharactersTexture(charSpace=(120,200), characters="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-+.?! ", fontPath="bahnschrift.ttf", color="white", background="black", output="characters.png", fontFactorWidth=0.7, fontFactorHeight=0.65, itemsPerSide=None):
     if itemsPerSide is None:
@@ -27,9 +38,7 @@ def createCharactersTexture(charSpace=(120,200), characters="ABCDEFGHIJKLMNOPQRS
     # get the widest character
     font = ImageFont.truetype(fontPath, charSize)
     charWidths = [(font.getmask(character).getbbox())[2] - (font.getmask(character).getbbox())[0] if character != ' ' else 0 for character in characters]
-    #print("%s" % "\n".join(["%s: %d" % (characters[i], charWidths[i]) for i in range(len(charWidths))]))
     widestChar = characters[charWidths.index(max(charWidths))]
-    #print("Widest char: %s" % widestChar)
     
     while i < maxIt:
         font = ImageFont.truetype(fontPath, charSize)
@@ -69,21 +78,27 @@ def createCharactersTexture(charSpace=(120,200), characters="ABCDEFGHIJKLMNOPQRS
 
 
 def findFont(name):
+    if os.path.isabs(name): # is already an absolute path
+        return name
     result = None
     if not "." in name:
         name = name + ".ttf"
+    testNames = (name, name.lower())
     fonts = getFonts()
-    if name in fonts:
-        result = os.path.join(os.path.join(os.environ['WINDIR'],'fonts', name))
-    elif name.lower() in fonts:
-        result = os.path.join(os.path.join(os.environ['WINDIR'],'fonts', name.lower()))
-    else:
-        print("Could not find font %s" % name)
+    for fontName, fontPath in fonts:
+        if fontName in testNames:
+            return fontPath
+    print("Could not find font %s" % name)
     return result
 
 
 def getFonts():
-    return [value for value in os.listdir(os.path.join(os.environ['WINDIR'],'fonts')) if value.endswith(".ttf")]
+    result = []
+    for directory in OS_FontsDir:
+        result.extend([(value, os.path.join(directory, value)) for value in os.listdir(directory) if value.endswith(".ttf")])
+    return result
+
+OS_FontsDir = initFontDir()
 
 if __name__ == "__main__":
     fontPath = findFont("bahnschrift.ttf")

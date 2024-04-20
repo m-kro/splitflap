@@ -9,12 +9,9 @@ from .texture import getFonts
 def flapSettings_getFonts(scene, context):
     items = []
     fonts = getFonts()
-    for font in fonts:
-        items.append((font, font, "available font"))
+    for fontName, fontPath in fonts:
+        items.append((fontPath, fontName, "available font"))
     return items
-
-def flapSettings_updateFont(self, context):
-    self.fontName = self.fontChoice
 
 def flapAnimation_updateDisplay(self, context):
     index = self.splitFlapAnimationIndex
@@ -121,17 +118,10 @@ class SplitFlapSettings(bpy.types.PropertyGroup):
         min = 0.2,
         max = 1.5
     )
-    fontName : bpy.props.StringProperty(
-        name="Font",
-        description="Font to use for the characters",
-        default="Bahnschrift",
-        maxlen=1024,
-    )
-    fontChoice : bpy.props.EnumProperty(
+    fontName : bpy.props.EnumProperty(
         name="Font",
         description="Font to use for the characters",
         items=flapSettings_getFonts,
-        update=flapSettings_updateFont
     )
     identPrefix : bpy.props.StringProperty(
         name="Identifier",
