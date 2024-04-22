@@ -95,7 +95,8 @@ def findFont(name):
 def getFonts():
     result = []
     for directory in OS_FontsDir:
-        result.extend([(value, os.path.join(directory, value)) for value in os.listdir(directory) if value.endswith(".ttf")])
+        for root, dirNames, fileNames in os.walk(directory):
+           result.extend([(f.split('.')[0], os.path.join(root, f)) for f in fileNames])
     return result
 
 OS_FontsDir = initFontDir()
