@@ -80,16 +80,20 @@ def createCharactersTexture(charSpace=(120,200), characters="ABCDEFGHIJKLMNOPQRS
 def findFont(name):
     if os.path.isabs(name): # is already an absolute path
         return name
-    result = None
     if not "." in name:
         name = name + ".ttf"
     testNames = (name, name.lower())
     fonts = getFonts()
     for fontName, fontPath in fonts:
         if fontName in testNames:
+            # test for TrueType:
+            try:
+                testFont = ImageFont.truetype(fontPath, 15)
+            except OSError:
+                return None
             return fontPath
     print("Could not find font %s" % name)
-    return result
+    return None
 
 
 def getFonts():

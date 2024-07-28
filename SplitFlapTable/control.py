@@ -460,7 +460,7 @@ class SplitFlapController(bpy.types.Operator):
         textureFile = "FlapCharacters%d.png"
         
         if fontPath is None:
-            self.report({'ERROR'}, "The font %s could not be found." % sfTool.fontName)
+            self.report({'ERROR'}, "The font %s could not be found or cannot be used as a TrueType font." % sfTool.fontName)
             return {'FINISHED'}
         
         # generate texture
