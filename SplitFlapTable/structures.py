@@ -29,6 +29,7 @@ def keySettings_update(self, context):
 def flapKeySettings_updateTextSource(self, context):
     if not self.useTextInput:
         if self.textBlock is not None:
+            print("update text from text block")
             self.text = self.textBlock.as_string()
 
 def flapKeySettings_evalText(self, context):

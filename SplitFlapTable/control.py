@@ -90,7 +90,6 @@ class SplitFlapAnimationPanel(bpy.types.Panel):
         row.operator("object.splitflapanimationcontroller", text="update entry").action='UPDATE'
         row.operator("object.splitflapanimationcontroller", text="remove entry").action='DELETE'
         row = layout.row()
-        #row.label(text="SplitFlapApplyFrames")
         row.operator("object.splitflapapplyframes")
 
 class SplitFlapAnimationListItem(bpy.types.UIList):
@@ -134,9 +133,6 @@ class SplitFlapAnimationController(bpy.types.Operator):
             # convert the string according to the available characters
             characters = bpy.data.collections[sfKeySetting.collectionID]["SplitFlapSettings.characters"]
             newText = self.formatText(sfKeySetting.text, context)
-            # if len(newText) != len(sfKeySetting.text):
-                # self.report({'INFO'}, "The text %s cannot be added as some character is not present in the set %s." % (sfKeySetting.text, characters))
-                # return {'FINISHED'}
             sfKeySetting.formattedText = newText
 
             timeDiffPrev = self.feasibleTime(context, deltaIndex = -1)
@@ -262,7 +258,7 @@ class SplitFlapAnimationController(bpy.types.Operator):
                     neededTime = max([self.__getFlaps(entry[0], entry[1], characters) for entry in zip(fromString, newString)]) * flapTime
                     return frames[newIndex][0] - neededTime
         else: # check next
-            if newIndex > len(sfAnimations.items) - 1:
+            if newIndex > len(sfAnimations.items) - 2:
                 return 0
             else:
                 deltaT = frames[newIndex+1][0] - frames[newIndex][0]
@@ -328,19 +324,6 @@ class SplitFlapApplyFrames(bpy.types.Operator):
             lastString = startChar * len(coll.all_objects)
             
             for frameSetting in frameSettings:
-                # check lower/upper case and replace automatically if one of them is not present in the character set
-                # singleChars = [c for c in frameSetting.text]
-                # for j in range(0, len(singleChars)):
-                    # if singleChars[j] not in characters:
-                        # if singleChars[j].islower() and singleChars[j].upper() in characters:
-                            # singleChars[j] = singleChars[j].upper()
-                        # elif singleChars[j].isupper() and singleChars[j].lower() in characters:
-                            # singleChars[j] = singleChars[j].lower()
-                        # else:
-                            # self.report({'INFO'}, "The character '%s' is not part of the given ones and will be replaced by '%s'." % (singleChars[j], characters[spaceIdx]))
-                            # singleChars[j] = characters[spaceIdx]
-                            
-                # frameSetting.text = "".join(singleChars)
                 i = 0
                 if frameSetting.extend:
                     targetString = frameSetting.formattedText[:maxLen] if len(frameSetting.formattedText) >= maxLen else frameSetting.formattedText + " " * (maxLen - len(frameSetting.formattedText))
@@ -451,7 +434,6 @@ class SplitFlapController(bpy.types.Operator):
             else:
                 self.report({'ERROR'}, "The import of the flap item template failed.")
                 return {'FINISHED'}
-        # print("card template object is %s" % str(cardTemplate))
         
         sfTool = context.scene.splitFlapTool
         # generate texture
@@ -584,7 +566,7 @@ class SplitFlapController(bpy.types.Operator):
             yMax = locEnd.y + (factor + add[1]) * dimensions.y
             zMin = locEnd.z - (factor + add[2]) * dimensions.z 
             zMax = locBegin.z + (factor + add[2]) * dimensions.z
-            print("X %.2f - %.2f\nY  %.2f - %.2f\nZ %.2f - %.2f" % (xMin, xMax, yMin, yMax, zMin, zMax))
+            #print("X %.2f - %.2f\nY  %.2f - %.2f\nZ %.2f - %.2f" % (xMin, xMax, yMin, yMax, zMin, zMax))
             frameSize = (0.5 * abs(xMax-xMin), 0.5 * abs(yMax-yMin), 0.5 * abs(zMax-zMin))
             frameCenter = (0.5 * (xMin + xMax), 0.5 * (yMin + yMax), 0.5 * (zMin + zMax))
             bpy.ops.mesh.primitive_cube_add(location=frameCenter, scale=frameSize)
@@ -624,6 +606,7 @@ class SplitFlapController(bpy.types.Operator):
                 else:
                     frameObj.data.materials.append(frameMat)
             parent(context, splitFlapItems, frameObj)
+            frameObj.location = context.scene.cursor.location # move frame to cursor
             
         # choose as default split flap items if there is no other selected
         sfKeySetting = context.scene.splitFlapKeySetting
