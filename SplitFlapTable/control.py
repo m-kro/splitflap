@@ -11,7 +11,7 @@ import addon_utils
 from mathutils import Vector
 
 from .texture import createCharactersTexture, findFont
-from .structures import SplitFlapKeySettings, SplitFlapSettings
+from .structures import SplitFlapKeySettings, SplitFlapSettings, flapKeySettings_updateTextSource
 
 class SplitFlapPanel(bpy.types.Panel):
     bl_label = "SplitFlap Panel"
@@ -123,6 +123,10 @@ class SplitFlapAnimationController(bpy.types.Operator):
     def execute(self, context):
         sfKeySetting = context.scene.splitFlapKeySetting
         sfAnimations = context.scene.splitFlapAnimations
+        
+        # update text (text input can remain the same but contain new text)
+        flapKeySettings_updateTextSource(sfKeySetting, context)
+        print(sfKeySetting) # TODO
         
         # checks
         if len(sfKeySetting.collectionID) == 0:
