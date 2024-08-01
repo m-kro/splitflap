@@ -474,11 +474,18 @@ class SplitFlapController(bpy.types.Operator):
         oldMat = bpy.data.materials.get(self.materialName)
         if oldMat is not None:
             newMat = oldMat.copy()
-            newMat.node_tree.nodes["Image Texture"].image = bpy.data.images.load(texturePath)
+            newMat.node_tree.nodes["Image Texture"].image = bpy.data.images.load("//%s" % textureFile)
             for slot in newCard.material_slots:
-                if slot.material.name == self.materialName:
+                if slot.material.name.startswith(self.materialName):
+                    print("replace material %s with new one in card" % slot.material.name)
                     slot.material = newMat
+                    break
         newObj = duplicateObject(templateFlapItem)
+        for slot in newObj.material_slots:
+            if slot.material.name.startswith(self.materialName):
+                print("replace material %s with new one in flapItem" % slot.material.name)
+                slot.material = newMat
+                break
         templateFlapItem.hide_viewport = True
         templateFlapItem.hide_render = True
         newObj.hide_viewport = False
