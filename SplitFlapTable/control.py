@@ -11,7 +11,7 @@ import addon_utils
 from mathutils import Vector
 
 from .texture import createCharactersTexture, findFont
-from .structures import SplitFlapKeySettings, SplitFlapSettings, flapKeySettings_updateTextSource
+from .structures import SplitFlapKeySettings, SplitFlapSettings, flapKeySettings_updateTextSource, flapAnimation_updateDisplay
 
 class SplitFlapPanel(bpy.types.Panel):
     bl_label = "SplitFlap Panel"
@@ -176,6 +176,7 @@ class SplitFlapAnimationController(bpy.types.Operator):
             index = context.scene.splitFlapAnimationIndex
             if index >= 0:
                 sfAnimations.items.remove(index)
+                context.scene.splitFlapAnimationIndex -= 1
         return {'FINISHED'}
     
     def formatText(self, text, context):
