@@ -138,7 +138,7 @@ class SplitFlapAnimationController(bpy.types.Operator):
             characters = bpy.data.collections[sfKeySetting.collectionID]["SplitFlapSettings.characters"]
             newText = self.formatText(sfKeySetting.text, context)
             sfKeySetting.formattedText = newText
-
+            
             timeDiffPrev = self.feasibleTime(context, deltaIndex = -1)
             timeDiffNext = self.feasibleTime(context, deltaIndex = 1)
             if timeDiffPrev < 0:
@@ -155,7 +155,7 @@ class SplitFlapAnimationController(bpy.types.Operator):
                     index = context.scene.splitFlapAnimationIndex
                     item = sfAnimations.items[index]
                     item.text = sfKeySetting.text
-                    item.formattedTest = sfKeySetting.formattedText
+                    item.formattedText = sfKeySetting.formattedText
                     item.extend = sfKeySetting.extend
                     item.keyTime = sfKeySetting.keyTime
                     item.center = sfKeySetting.center
