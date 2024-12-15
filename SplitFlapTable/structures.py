@@ -55,7 +55,7 @@ class SplitFlapSettings(bpy.types.PropertyGroup):
         description="Number of rows of split flap items",
         default = 1,
         min = 1,
-        max = 10
+        max = 100
     )
     colCount : bpy.props.IntProperty(
         name = "Column count",
