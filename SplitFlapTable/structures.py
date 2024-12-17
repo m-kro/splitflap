@@ -154,7 +154,7 @@ class SplitFlapKeySettings(bpy.types.PropertyGroup):
         name="Original text input",
         description="Original text input by the user",
         default="",
-        maxlen=1024,
+        maxlen=2048,
         update=flapKeySettings_evalText,
         options={'TEXTEDIT_UPDATE'}
     )
@@ -168,7 +168,7 @@ class SplitFlapKeySettings(bpy.types.PropertyGroup):
         name="Text to display",
         description="Text to display when the split flap collection is initialised, taking into account the available characters",
         default="",
-        maxlen=1024,
+        maxlen=2048,
     )
     keyTime : bpy.props.FloatProperty(
         name = "Time key",
