@@ -60,7 +60,7 @@ def createCharactersTexture(charSpace=(120,200), characters="ABCDEFGHIJKLMNOPQRS
         dChar = ImageDraw.Draw(imChar)
         if deprecatedSize:
             left, top, right, bottom = dChar.textbbox((0,0), c, font=font)
-            print("left %.0f top %.0f right %.0f bottom %.0f" % (left, top, right, bottom))
+            # print("left %.0f top %.0f right %.0f bottom %.0f" % (left, top, right, bottom))
             textWidth = right - left
             textHeight = bottom - top
         else:

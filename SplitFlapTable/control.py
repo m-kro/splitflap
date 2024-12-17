@@ -531,8 +531,8 @@ class SplitFlapController(bpy.types.Operator):
         collection.objects.link(newCard)
         
         # optionally scale the flap item, maintain the current width
-        #oldRatio = newCard.dimensions[0]*newCard.scale.x/(2*newCard.dimensions[2]*newCard.scale.z) # X / Z
         newCard.scale.z = newCard.dimensions[0]*newCard.scale.x/(2*newCard.dimensions[2]*sfTool.flapRatio)
+        newCard.hide_viewport = False
         applyTransforms(context, [newCard], location=False, rotation=False, scale=True)
         newCard.hide_viewport = True
         
@@ -544,6 +544,7 @@ class SplitFlapController(bpy.types.Operator):
         bpy.context.view_layer.update()
         width = splitFlapItems[0].dimensions.x
         height = splitFlapItems[0].dimensions.z
+        print("splitFlapItem height %.2f" % height)
         bounds = []
         bounds.append(splitFlapItems[0].bound_box)
         
@@ -557,7 +558,7 @@ class SplitFlapController(bpy.types.Operator):
                 objCopy.location.x = splitFlapItems[0].location.x + h*(width + sfTool.horizontalGap)
                 objCopy.location.z = splitFlapItems[0].location.z - v*(height + sfTool.verticalGap)
                 splitFlapItems.append(objCopy)
-                print("split flap copy h=%d v=%d x0=%.2f z0=%.2f x=%.2f z=%.2f height=%.2f" % (h, v, splitFlapItems[0].location.x, splitFlapItems[0].location.z, objCopy.location.x, objCopy.location.z, height))
+                #print("split flap copy h=%d v=%d x0=%.2f z0=%.2f x=%.2f z=%.2f height=%.2f" % (h, v, splitFlapItems[0].location.x, splitFlapItems[0].location.z, objCopy.location.x, objCopy.location.z, height))
                 d += 1
         
         for splitFlapItem in splitFlapItems[1:]:
