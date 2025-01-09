@@ -17,6 +17,7 @@ python instance that ships with the Blender installation. For this, open a comma
 ```
 python -m pip install pillow
 ```
+You may need write rights in the Blender installation directory to complete the module installation successfully.
 
 # Usage
 - Open the addon panels in Blender 3D View pressing [N]
@@ -70,4 +71,4 @@ As Blender resolves naming conflicts by appending suffixes, this may disturb the
 
 
 # Compatibility
-Developed using Blender 3.4. Tested with Blender 4.0.
+Developed using Blender 3.4. Tested with Blender 4.0, 4.2.
