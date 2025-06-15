@@ -71,4 +71,4 @@ As Blender resolves naming conflicts by appending suffixes, this may disturb the
 
 
 # Compatibility
-Developed using Blender 3.4. Tested with Blender 4.0, 4.2.
+Developed using Blender 3.4. Tested with Blender 4.0, 4.2, 4.4.
